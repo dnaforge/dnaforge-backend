@@ -1,0 +1,23 @@
+services:
+  dnaforge-backend:
+    build: .
+    image: lewimbes/dnaforge-backend
+    container_name: dnaforge-backend
+    runtime: nvidia
+    restart: unless-stopped
+    environment:
+      # Define the location of the data directory in the container.
+      DATADIR: /data/
+
+      # Port number
+      # If left blank, 80 will be used.
+      PORT: 8080
+
+      # Host IP address
+      # If left blank, 0.0.0.0 will be used.
+      HOST: 0.0.0.0
+
+      # Set a (random) access token to restrict access if your service is publicly available.
+      # Use a reverse proxy and https, otherwise the token will be transmitted over an unencrypted connection.
+      # If left blank, access is possible without any authentication.
+      ACCESSTOKEN: ChangeMe
