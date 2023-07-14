@@ -4,7 +4,6 @@ import Environment
 import io.ktor.server.websocket.*
 import io.ktor.websocket.*
 import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
 import sim.Jobs
 import simpleJson
@@ -38,7 +37,7 @@ class Client(val session: WebSocketServerSession) {
     }
 
     suspend fun sendMessage(message: Message) =
-        session.outgoing.send(Frame.Text(Json.encodeToString(message)))
+        session.outgoing.send(Frame.Text(simpleJson.encodeToString(message)))
 
     suspend fun updateAllowed(accessToken: String?) {
         val success = allowed || Environment.inst.allowAccess(accessToken)
