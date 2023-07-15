@@ -6,15 +6,13 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.slf4j.LoggerFactory
 import web.Clients
-import web.NewJob
 import java.io.File
 
 @OptIn(DelicateCoroutinesApi::class)
 object Jobs {
     const val stepFileName = "step.json"
 
-    private val env = Environment.inst
-    private val logger = LoggerFactory.getLogger(Jobs::class.java)
+    private val log = LoggerFactory.getLogger(Jobs::class.java)
     private val scope = CoroutineScope(newSingleThreadContext("JobExecutionContext"))
     private var job: Job? = null
     private val mutex = Mutex()
@@ -35,19 +33,19 @@ object Jobs {
         }
     }
 
-    suspend fun submitNewJob(newJob: NewJob) {
+    suspend fun submitNewJob(configs: List<StepConfig>, top: String, dat: String, forces: String) {
         val id = mutex.withLock {
             nextId++
         }
-        val job = SimJob(id, newJob.configs.size.toUInt())
+        val job = SimJob(id, configs.size.toUInt())
 
         // write files
         job.toDisk()
-        job.topFile.writeText(newJob.top.replace("\r\n", "\n"))
-        job.startConfFile.writeText(newJob.dat.replace("\r\n", "\n"))
-        job.forcesFile.writeText(newJob.forces.replace("\r\n", "\n"))
+        job.topFile.writeText(top.replace("\r\n", "\n"))
+        job.startConfFile.writeText(dat.replace("\r\n", "\n"))
+        job.forcesFile.writeText(forces.replace("\r\n", "\n"))
 
-        for (indexedStep in newJob.configs.withIndex()) {
+        for (indexedStep in configs.withIndex()) {
             val i = indexedStep.index
             val step = indexedStep.value
 
@@ -62,7 +60,7 @@ object Jobs {
             Clients.propagateUpdate(job.id, job)
         }
 
-        logger.info("New job with id $id submitted.")
+        log.info("New job with id $id submitted.")
 
         startJobWorker()
     }
@@ -97,7 +95,7 @@ object Jobs {
                 nextJob?.execute()
             }
 
-            logger.info("No new job found to execute. Worker will stop for now.")
+            log.info("No new job found to execute. Worker will stop for now.")
         }
         job?.start()
     }
@@ -115,8 +113,12 @@ object Jobs {
         return candidates.firstOrNull()
     }
 
+    /**
+     * Reads all [SimJob]s from the [Environment.dataDir].
+     * The [SimJob]s are stored in the [jobs] map.
+     */
     private suspend fun readAllJobs() = mutex.withLock {
-        (env.dataDir.listFiles()?.toList() ?: listOf<File>()).mapNotNull { file: File? ->
+        (Environment.dataDir.listFiles()?.toList() ?: listOf<File>()).mapNotNull { file: File? ->
             var name: UInt = UInt.MAX_VALUE
             if (file == null || !file.isDirectory || file.name.toUIntOrNull()?.also { name = it } == null) null
             else Pair(name, SimJob.fromDisk(file))

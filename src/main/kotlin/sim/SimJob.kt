@@ -41,7 +41,7 @@ class SimJob(
     private var process: Process? = null
 
     @Transient
-    val dir = File(env.dataDir, id.toString())
+    val dir = File(Environment.dataDir, id.toString())
 
     @Transient
     private val file = File(dir, jobFileName)
@@ -186,8 +186,6 @@ class SimJob(
     }
 
     companion object {
-        private val env = Environment.inst
-
         private const val jobFileName = "job.json"
 
         @OptIn(ExperimentalSerializationApi::class)

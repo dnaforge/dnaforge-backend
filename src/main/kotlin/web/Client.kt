@@ -8,15 +8,25 @@ import org.slf4j.LoggerFactory
 import sim.Jobs
 import simpleJson
 
+/**
+ * This class represents a client connected to this application.
+ * [session] is the corresponding [WebSocketServerSession].
+ */
 class Client(val session: WebSocketServerSession) {
     private var allowed: Boolean = false
 
     companion object {
-        private val logger = LoggerFactory.getLogger(Client::class.java)
+        private val log = LoggerFactory.getLogger(Client::class.java)
     }
 
+    /**
+     * Handles the given [Message] in the context of this [Client].
+     *
+     * @param message the [Message] to process.
+     */
     suspend fun handleMessage(message: Message) {
-        logger.info("Handling message.")
+        log.debug("A message has been received.")
+
         // handle authentication request
         if (message is Authenticate) {
             updateAllowed(message.accessToken)
@@ -28,7 +38,7 @@ class Client(val session: WebSocketServerSession) {
 
         // handle other message types
         when (message) {
-            is JobNew -> Jobs.submitNewJob(message.job)
+            is JobNew -> Jobs.submitNewJob(message.configs, message.top, message.dat, message.forces)
             is JobCancel -> Jobs.cancelJob(message.jobId)
             is JobDelete -> Jobs.deleteJob(message.jobId)
             is JobSubscribe -> Clients.subscribe(this, message.jobId)
@@ -36,18 +46,31 @@ class Client(val session: WebSocketServerSession) {
         }
     }
 
+    /**
+     * Sends a [Message] to this [Client].
+     *
+     * @param message the [Message] to send.
+     */
     suspend fun sendMessage(message: Message) =
         session.outgoing.send(Frame.Text(simpleJson.encodeToString(message)))
 
-    suspend fun updateAllowed(accessToken: String?) {
-        val success = allowed || Environment.inst.allowAccess(accessToken)
+    /**
+     * Checks if the given [accessToken] is valid and updates the [allowed] status accordingly.
+     * If this [Client] has already been authenticated, nothing changes.
+     *
+     * @param accessToken the token to use for this authentication attempt.
+     */
+    private suspend fun updateAllowed(accessToken: String?) {
+        val success = allowed || Environment.allowAccess(accessToken)
         if (success) allowed = true
 
         // only send message if the client tried to authenticate or authentication was successful
         if (accessToken != null || success)
             sendMessage(AuthenticationResponse(success))
 
-        if (allowed)
+        if (allowed) {
             sendMessage(JobList(Jobs.getJobs()))
+            log.debug("A client authenticated successfully.")
+        }
     }
 }

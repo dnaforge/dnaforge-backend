@@ -13,12 +13,19 @@ fun Logger.error(exception: Throwable): Nothing {
 }
 
 
+/**
+ * [Json] with default and `null` encoding.
+ */
 @OptIn(ExperimentalSerializationApi::class)
 val simpleJson = Json {
     encodeDefaults = true
     explicitNulls = true
 }
 
+/**
+ * [Json] with default and `null` encoding.
+ * Pretty print is enabled.
+ */
 @OptIn(ExperimentalSerializationApi::class)
 val prettyJson = Json {
     prettyPrint = true

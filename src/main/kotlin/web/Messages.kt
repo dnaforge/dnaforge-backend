@@ -53,7 +53,7 @@ data class JobUpdate(val jobId: UInt, val job: SimJob?) : Message
  */
 @Serializable
 @SerialName("JobNew")
-data class JobNew(val job: NewJob) : Message
+data class JobNew(val configs: List<StepConfig>, val top: String, val dat: String, val forces: String) : Message
 
 /**
  * Sent by a client.
@@ -87,7 +87,3 @@ data class JobSubscribe(val jobId: UInt?) : Message
 @Serializable
 @SerialName("DetailedUpdate")
 data class DetailedUpdate(val conf: String) : Message
-
-
-@Serializable
-data class NewJob(val configs: List<StepConfig>, val top: String, val dat: String, val forces: String)
