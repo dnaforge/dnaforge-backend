@@ -8,6 +8,9 @@ import org.slf4j.LoggerFactory
 import web.Clients
 import java.io.File
 
+/**
+ * This object manages jobs in this application.
+ */
 @OptIn(DelicateCoroutinesApi::class)
 object Jobs {
     const val stepFileName = "step.json"
@@ -19,12 +22,19 @@ object Jobs {
 
     private val jobs = mutableMapOf<UInt, SimJob>()
     private var nextId: UInt
+
+    /**
+     * Create a [List] of [SimJob]s ordered by their [SimJob.id].
+     *
+     * @return a new [List] with all known [SimJob]s.
+     */
     suspend fun getJobs() = mutex.withLock { jobs.toList().sortedBy { it.first }.map { it.second } }
 
     init {
         runBlocking {
             readAllJobs()
 
+            // determine next ID
             mutex.withLock {
                 nextId = jobs.maxOfOrNull { it.key } ?: 0u
             }
@@ -33,6 +43,9 @@ object Jobs {
         }
     }
 
+    /**
+     * Creates a new [SimJob] and adds it to the execution queue.
+     */
     suspend fun submitNewJob(configs: List<StepConfig>, top: String, dat: String, forces: String) {
         val id = mutex.withLock {
             nextId++
@@ -52,7 +65,7 @@ object Jobs {
             val dir = File(job.dir, i.toString())
             dir.mkdirs()
             val stepFile = File(dir, stepFileName)
-            step.toFile(stepFile)
+            step.toJsonFile(stepFile)
         }
 
         mutex.withLock {
@@ -60,19 +73,31 @@ object Jobs {
             Clients.propagateUpdate(job.id, job)
         }
 
-        log.info("New job with id $id submitted.")
+        log.info("New job with ID $id submitted.")
 
         startJobWorker()
     }
 
+    /**
+     * Cancels the execution of the [SimJob] specified by the ID.
+     *
+     * @param jobId the ID of the [SimJob] to be canceled.
+     */
     suspend fun cancelJob(jobId: UInt) = mutex.withLock {
         val job = jobs[jobId] ?: return@withLock
 
         job.cancel()
 
         Clients.propagateUpdate(job.id, job)
+
+        log.info("Job with ID $jobId canceled.")
     }
 
+    /**
+     * Deletes the [SimJob] specified by the ID.
+     *
+     * @param jobId the ID of the [SimJob] to be deleted.
+     */
     suspend fun deleteJob(jobId: UInt) = mutex.withLock {
         val job = jobs[jobId] ?: return@withLock
 
@@ -81,8 +106,13 @@ object Jobs {
         jobs.remove(jobId)
         job.deleteFiles()
         Clients.propagateUpdate(job.id, null)
+
+        log.info("Job with ID $jobId deleted.")
     }
 
+    /**
+     * Starts a new job worker if needed.
+     */
     private suspend fun startJobWorker() = mutex.withLock {
 
         // Worker is already running
@@ -100,13 +130,19 @@ object Jobs {
         job?.start()
     }
 
+    /**
+     * Calculates the [SimJob] to run next.
+     * Partially completed [SimJob]s have a higher priority than new [SimJob]s.
+     *
+     * @return the next [SimJob] to run or `null` if no [SimJob] is left.
+     */
     private suspend fun getNextJob(): SimJob? = mutex.withLock {
         val candidates = jobs.asSequence()
             .filter { it.value.status == JobState.NEW || it.value.status == JobState.RUNNING } // filter for jobs that still need to run
             .sortedBy { it.key } // sort by id
             .map { it.value } // only take job
 
-        // first try to continue running a partially completed job
+        // first, try to continue running a partially completed job
         val running = candidates.firstOrNull { it.status == JobState.RUNNING }
         if (running != null) return running
 

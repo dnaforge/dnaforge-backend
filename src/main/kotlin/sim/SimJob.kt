@@ -11,6 +11,7 @@ import kotlinx.serialization.SerializationException
 import kotlinx.serialization.Transient
 import kotlinx.serialization.json.decodeFromStream
 import kotlinx.serialization.json.encodeToStream
+import org.slf4j.LoggerFactory
 import prettyJson
 import web.Clients
 import java.io.BufferedReader
@@ -20,6 +21,9 @@ import java.io.InputStreamReader
 import java.util.concurrent.TimeUnit
 
 // TODO consider private setters and a custom de-/serializer
+/**
+ * This class represents a job.
+ */
 @Serializable
 class SimJob(
     val id: UInt,
@@ -55,7 +59,13 @@ class SimJob(
     @Transient
     val forcesFile = File(dir, "forces.forces")
 
+    /**
+     * Runs this [SimJob] and updates its status whenever needed.
+     * Also initiates the propagation of updates to clients.
+     */
     suspend fun execute() = mutex.withLock {
+        log.info("Executing the job with ID $id.")
+
         // set running state if not already canceled
         val cancel = cancelMutex.withLock {
             if (shouldStopExecution()) true
@@ -81,11 +91,21 @@ class SimJob(
                 status = JobState.DONE
         }
         Clients.propagateUpdate(this.id, this)
+
+        log.info("Execution of the job with ID $id finished.")
     }
 
+    /**
+     * Small helper function that tests if this [SimJob] is [JobState.CANCELED],
+     * [JobState.DONE] or has encountered an error.
+     */
     private fun shouldStopExecution(): Boolean = status == JobState.CANCELED || status == JobState.DONE || error != null
 
+    /**
+     * Executes the next step of this [SimJob].
+     */
     private suspend fun executeNextStep() {
+        log.debug("Running step $completedSteps of the job with ID $id.")
         val nextDir = File(dir, completedSteps.toString())
         prepareFilesForNextStep(nextDir)
         val nextLogFile = File(nextDir, "oxDNA.log")
@@ -95,7 +115,7 @@ class SimJob(
         val pb = ProcessBuilder()
         pb.directory(nextDir)
         pb.command(listOf("oxDNA", "input.properties"))
-        // for some reason oxDNA only writes the energy to std out and everything else to std error
+        // for some reason, oxDNA only writes the energy to std out and everything else to std error
         pb.redirectError(ProcessBuilder.Redirect.appendTo(nextLogFile))
 
         var energyStream: BufferedReader? = null
@@ -141,12 +161,19 @@ class SimJob(
                     status = JobState.CANCELED
             }
         }
+
+        log.debug("The execution of a step of the job with the ID $id is completed.")
     }
 
+    /**
+     * Copies the files from the previous step (or initial files for step 0) and creates the oxDNA input file.
+     *
+     * @param nextDir the directory to prepare.
+     */
     private fun prepareFilesForNextStep(nextDir: File) {
         // prepare input file
         val stepFile = File(nextDir, Jobs.stepFileName)
-        val stepConfig = StepConfig.fromFile(stepFile)
+        val stepConfig = StepConfig.fromJsonFile(stepFile)
         val inputFile = File(nextDir, StepConfig.inputFileName)
         stepConfig.toPropertiesFile(inputFile)
 
@@ -162,32 +189,63 @@ class SimJob(
         oldConfFile.copyTo(startConfFile, true)
     }
 
-    suspend fun cancel() = cancelMutex.withLock {
-        // can't cancel these anymore...
-        if (status == JobState.CANCELED || status == JobState.DONE) return@withLock
+    /**
+     * Cancels the execution of this [SimJob].
+     */
+    suspend fun cancel() {
+        log.debug("Attempting to cancel the job with ID $id.")
 
-        status = JobState.CANCELED
+        cancelMutex.withLock {
+            // can't cancel these anymore...
+            if (status == JobState.CANCELED || status == JobState.DONE) return@withLock
 
-        process?.destroy()
-        // give it 5s to terminate gracefully
-        val ended = process?.waitFor(5, TimeUnit.SECONDS) ?: true
-        // kill it if necessary
-        if (!ended) process?.destroyForcibly()
+            status = JobState.CANCELED
+
+            process?.destroy()
+            // give it 5s to terminate gracefully
+            val ended = process?.waitFor(5, TimeUnit.SECONDS) ?: true
+            // kill it if necessary
+            if (!ended) process?.destroyForcibly()
+        }
+
+        log.info("The job with ID $id has been canceled.")
     }
 
+    /**
+     * Writes the current state of this [SimJob] to disk.
+     */
     @OptIn(ExperimentalSerializationApi::class)
-    suspend fun toDisk(): Unit = mutex.withLock {
-        dir.mkdirs()
-        file.outputStream().use { prettyJson.encodeToStream(this, it) }
+    suspend fun toDisk() {
+        mutex.withLock {
+            dir.mkdirs()
+            file.outputStream().use { prettyJson.encodeToStream(this, it) }
+        }
+
+        log.debug("Wrote the job with ID $id to disk.")
     }
 
-    suspend fun deleteFiles() = mutex.withLock {
-        dir.deleteRecursively()
+    /**
+     * Deletes all files related to this [SimJob].
+     */
+    suspend fun deleteFiles() {
+        mutex.withLock {
+            dir.deleteRecursively()
+        }
+
+        log.info("All files of the job with ID $id have been deleted.")
     }
 
     companion object {
+        private val log = LoggerFactory.getLogger(SimJob::class.java)
         private const val jobFileName = "job.json"
 
+        /**
+         * Reads a [SimJob] from the specified directory [File].
+         *
+         * @param directory the [File] to read from.
+         *
+         * @return a new [SimJob] instance.
+         */
         @OptIn(ExperimentalSerializationApi::class)
         @Throws(SerializationException::class, IllegalArgumentException::class)
         fun fromDisk(directory: File): SimJob {
@@ -197,6 +255,9 @@ class SimJob(
     }
 }
 
+/**
+ * States a [SimJob] can be in.
+ */
 enum class JobState {
     NEW,
     RUNNING,

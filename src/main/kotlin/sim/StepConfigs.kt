@@ -8,6 +8,9 @@ import kotlinx.serialization.json.encodeToStream
 import prettyJson
 import java.io.File
 
+/**
+ * Default relaxation config using simulation type [MinConfig].
+ */
 private val min: StepConfig = ManualConfig(
     steps = 2000u,
     dt = 0.005f,
@@ -20,6 +23,9 @@ private val min: StepConfig = ManualConfig(
     simType = MinConfig
 )
 
+/**
+ * Default relaxation config using simulation type [McConfig] and [RelaxInteraction].
+ */
 private val mcRelax: StepConfig = ManualConfig(
     steps = 100u,
     dt = 0.00001f,
@@ -45,6 +51,9 @@ private val mcRelax: StepConfig = ManualConfig(
     )
 )
 
+/**
+ * Default relaxation config using simulation type [MdConfig] and [RelaxInteraction].
+ */
 private val mdRelax: StepConfig = ManualConfig(
     steps = 1e3.toUInt(),
     dt = 0.005f,
@@ -68,6 +77,9 @@ private val mdRelax: StepConfig = ManualConfig(
     )
 )
 
+/**
+ * Default simulation config using simulation type [MdConfig] and [V1InteractionType.DNA].
+ */
 private val mdSim: StepConfig = ManualConfig(
     steps = 1e6.toUInt(), // was 1e8
     dt = 0.005f,
@@ -89,13 +101,39 @@ private val mdSim: StepConfig = ManualConfig(
     )
 )
 
+/**
+ * Default step list.
+ */
 val default: List<StepConfig> = listOf(min, mcRelax, mdRelax, mdSim)
 
 
+/**
+ * Super class for all types of configurations that can be used to configure a simulation or relaxation step.
+ */
 @Serializable
 sealed class StepConfig {
 
-    private fun toParameterMap(): Map<String, String> = buildMap {
+    /**
+     * Writes this [StepConfig] to the specified JSON [File].
+     *
+     * @param file the file to write to. Existing content is overwritten.
+     */
+    @OptIn(ExperimentalSerializationApi::class)
+    fun toJsonFile(file: File) = file.outputStream().use { prettyJson.encodeToStream(this, it) }
+
+    /**
+     * Encodes this [StepConfig] into a [Map].
+     *
+     * @return a new [Map] containing the properties of this [StepConfig].
+     */
+    protected abstract fun encodeToMap(): Map<String, String>
+
+    /**
+     * Uses [encodeToMap] and adds some important default values.
+     *
+     * @return a new [Map] containing the properties of this [StepConfig] and some default values.
+     */
+    private fun getCleanParameterMap(): Map<String, String> = buildMap {
         this.putAll(encodeToMap())
 
         // input
@@ -111,13 +149,13 @@ sealed class StepConfig {
         this["max_io"] = "100.0"
     }
 
-    @OptIn(ExperimentalSerializationApi::class)
-    fun toFile(file: File) = file.outputStream().use { prettyJson.encodeToStream(this, it) }
-
+    /**
+     * Writes this [StepConfig] to the specified properties [File].
+     *
+     * @param file the file to write to. Existing content is overwritten.
+     */
     fun toPropertiesFile(file: File) =
-        file.writeText(toParameterMap().entries.joinToString("\n") { (key, value) -> "$key = $value" })
-
-    protected abstract fun encodeToMap(): Map<String, String>
+        file.writeText(getCleanParameterMap().entries.joinToString("\n") { (key, value) -> "$key = $value" })
 
     companion object {
         const val inputFileName = "input.properties"
@@ -129,20 +167,25 @@ sealed class StepConfig {
         const val trajectoryFileName = "trajectory.dat"
         const val energyFileName = "energy.dat"
 
+        /**
+         * Reads a [StepConfig] from the specified JSON [File].
+         *
+         * @param file the [File] to read from.
+         *
+         * @return a new [StepConfig] instance.
+         */
         @OptIn(ExperimentalSerializationApi::class)
-        fun fromFile(file: File): StepConfig = file.inputStream().use { prettyJson.decodeFromStream(it) }
+        fun fromJsonFile(file: File): StepConfig = file.inputStream().use { prettyJson.decodeFromStream(it) }
     }
 }
 
-
-@Serializable
-sealed interface SubConfig {
-    fun encodeToMap(): Map<String, String>
-}
-
+/**
+ * [FileConfig] is a type of [StepConfig] and is to be used to represent a pre-made oxDNA input file.
+ */
 @Serializable
 @SerialName("FileConfig")
 data class FileConfig(val content: String) : StepConfig() {
+
     override fun encodeToMap(): Map<String, String> = buildMap {
         content.lineSequence()
             .map { it.trim() } // ignore leading or trailing spaces
@@ -158,17 +201,48 @@ data class FileConfig(val content: String) : StepConfig() {
     }
 }
 
+/**
+ * This interface exists to enforce that the [encodeToMap] function exists for all parts of a [StepConfig].
+ */
+@Serializable
+sealed interface SubConfig {
+
+    /**
+     * Encodes this [SubConfig] into a [Map].
+     *
+     * @return a new [Map] containing the properties of this [SubConfig].
+     */
+    fun encodeToMap(): Map<String, String>
+}
+
+/**
+ * Specifies the simulation type.
+ */
 @Serializable
 sealed interface SimTypeConfig : SubConfig
 
+/**
+ * Specifies the type of particle interaction for some simulation types.
+ */
 @Serializable
 sealed interface InteractionTypeConfig : SubConfig {
+
+    /**
+     * Whether this interaction type allows the use of CUDA.
+     */
     val allowsCuda: Boolean
 }
 
+/**
+ * Specifies the type of thermostat for some simulation types.
+ */
 @Serializable
 sealed interface ThermostatConfig : SubConfig
 
+/**
+ * [ManualConfig] is a type of [StepConfig]
+ * and is to be used to represent an oxDNA input file with a permissive set of options.
+ */
 @Serializable
 @SerialName("ManualConfig")
 data class ManualConfig(
@@ -204,9 +278,13 @@ data class ManualConfig(
     }
 }
 
+/**
+ * Type of simulation that attempts to minimize potential energy.
+ */
 @Serializable
 @SerialName("MinConfig")
 data object MinConfig : SimTypeConfig {
+
     override fun encodeToMap(): Map<String, String> = buildMap {
         this["sim_type"] = SimType.MIN.configName
         this["interaction_type"] = V1InteractionType.DNA.configName
@@ -214,6 +292,9 @@ data object MinConfig : SimTypeConfig {
     }
 }
 
+/**
+ * Monte Carlo simulation.
+ */
 @Serializable
 @SerialName("McConfig")
 data class McConfig(
@@ -236,6 +317,9 @@ data class McConfig(
     }
 }
 
+/**
+ * Molecular dynamics simulation.
+ */
 @Serializable
 @SerialName("MdConfig")
 data class MdConfig(
@@ -253,6 +337,9 @@ data class MdConfig(
     }
 }
 
+/**
+ * Specifies relaxation interaction properties.
+ */
 @Serializable
 @SerialName("RelaxInteraction")
 data class RelaxInteraction(
@@ -261,6 +348,7 @@ data class RelaxInteraction(
     val relaxStrength: Float
 ) : InteractionTypeConfig {
     override val allowsCuda: Boolean = false
+
     override fun encodeToMap(): Map<String, String> = buildMap {
         this["interaction_type"] = relaxInteractionType.configName
         this["relax_type"] = relaxType.configName
@@ -268,17 +356,24 @@ data class RelaxInteraction(
     }
 }
 
+/**
+ * Specifies v1 interaction properties.
+ */
 @Serializable
 @SerialName("V1Interaction")
 data class V1Interaction(
     val v1InteractionType: V1InteractionType
 ) : InteractionTypeConfig {
     override val allowsCuda: Boolean = true
+
     override fun encodeToMap(): Map<String, String> = buildMap {
         this["interaction_type"] = v1InteractionType.configName
     }
 }
 
+/**
+ * Specifies v2 interaction properties.
+ */
 @Serializable
 @SerialName("V2Interaction")
 data class V2Interaction(
@@ -286,12 +381,17 @@ data class V2Interaction(
     val saltConcentration: Float
 ) : InteractionTypeConfig {
     override val allowsCuda: Boolean = true
+
     override fun encodeToMap(): Map<String, String> = buildMap {
         this["interaction_type"] = v2InteractionType.configName
         this["salt_concentration"] = saltConcentration.toString()
     }
 }
 
+
+/**
+ * Specifies Brownian thermostat properties.
+ */
 @Serializable
 @SerialName("BrownianThermostat")
 data class BrownianThermostat(
@@ -299,6 +399,7 @@ data class BrownianThermostat(
     val pt: Float,
     val diffCoeff: Float
 ) : ThermostatConfig {
+
     override fun encodeToMap(): Map<String, String> = buildMap {
         this["thermostat"] = "brownian"
         this["newtonian_steps"] = newtonianSteps.toString()
@@ -307,23 +408,34 @@ data class BrownianThermostat(
     }
 }
 
-
+/**
+ * Supported simulation types.
+ */
 enum class SimType(val configName: String) {
     MIN("min"),
     MC("MC"),
     MD("MD")
 }
 
+/**
+ * Supported relaxation types.
+ */
 enum class RelaxInteractionType(val configName: String) {
     DNA_RELAX("DNA_relax"),
     RNA_RELAX("RNA_relax")
 }
 
+/**
+ * Supported v1 interaction types.
+ */
 enum class V1InteractionType(val configName: String) {
     DNA("DNA"),
     RNA("RNA"),
 }
 
+/**
+ * Supported v2 interaction types.
+ */
 enum class V2InteractionType(val configName: String) {
     DNA2("DNA2"),
     RNA2("RNA2"),

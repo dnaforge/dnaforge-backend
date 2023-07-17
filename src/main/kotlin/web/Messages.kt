@@ -40,7 +40,7 @@ data class JobList(val jobs: List<SimJob>) : Message
 
 /**
  * Sent by the server.
- * Notifies the client that the [SimJob] with id [jobId] has undergone a state change.
+ * Notifies the client that the [SimJob] with ID [jobId] has undergone a state change.
  * If [job] is `null`, the [SimJob] has been deleted.
  */
 @Serializable
