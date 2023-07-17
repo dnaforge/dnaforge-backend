@@ -12,7 +12,7 @@ import simpleJson
  * This class represents a client connected to this application.
  * [session] is the corresponding [WebSocketServerSession].
  */
-class Client(val session: WebSocketServerSession) {
+data class Client(val session: WebSocketServerSession) {
     private var allowed: Boolean = false
 
     companion object {

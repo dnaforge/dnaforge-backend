@@ -44,8 +44,17 @@ object Jobs {
 
         coroutineJob = scope.launch {
             for (job in queue) {
+                // check if job is actually still queued or not
                 if (!mutex.withLock { queuedJobs.containsKey(job.id) }) continue
+
+
                 job.execute()
+
+                // move job to finished jobs
+                mutex.withLock {
+                    queuedJobs.remove(job.id)
+                    finishedJobs[job.id] = job
+                }
             }
 
             log.warn("No new job found to execute. Worker will stop.")
