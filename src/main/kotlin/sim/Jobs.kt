@@ -2,6 +2,7 @@ package sim
 
 import Environment
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.slf4j.LoggerFactory
@@ -16,30 +17,42 @@ import java.io.File
 object Jobs {
     private val log = LoggerFactory.getLogger(Jobs::class.java)
     private val scope = CoroutineScope(newSingleThreadContext("JobExecutionContext"))
-    private var job: Job? = null
+    private val coroutineJob: Job
     private val mutex = Mutex()
 
-    private val jobs = mutableMapOf<UInt, SimJob>()
     private var nextId: UInt
 
+    // needed since it's not possible to get all queued jobs from the channel
+    private val queuedJobs: MutableMap<UInt, SimJob> = LinkedHashMap()
+    private val queue = Channel<SimJob>(Channel.UNLIMITED)
+    private val finishedJobs: MutableMap<UInt, SimJob> = LinkedHashMap()
+
     /**
-     * Create a [List] of [SimJob]s ordered by their [SimJob.id].
+     * Creates a [List] of [SimJob]s.
      *
      * @return a new [List] with all known [SimJob]s.
      */
-    suspend fun getJobs() = mutex.withLock { jobs.toList().sortedBy { it.first }.map { it.second } }
+    suspend fun getJobs() = mutex.withLock { finishedJobs.values + queuedJobs.values }
 
     init {
         runBlocking {
             readAllJobs()
 
             // determine next ID
-            mutex.withLock {
-                nextId = jobs.maxOfOrNull { it.key } ?: 0u
+            nextId = getJobs().maxOfOrNull { it.id } ?: 0u
+        }
+
+        coroutineJob = scope.launch {
+            for (job in queue) {
+                if (!mutex.withLock { queuedJobs.containsKey(job.id) }) continue
+                job.execute()
             }
 
-            startJobWorker()
+            log.warn("No new job found to execute. Worker will stop.")
         }
+        coroutineJob.start()
+
+        log.info("Job worker started.")
     }
 
     /**
@@ -68,13 +81,12 @@ object Jobs {
         }
 
         mutex.withLock {
-            jobs[job.id] = job
+            queuedJobs[job.id] = job
+            queue.send(job)
             Clients.propagateUpdate(job.id, job)
         }
 
         log.info("New job with ID $id submitted.")
-
-        startJobWorker()
     }
 
     /**
@@ -82,12 +94,16 @@ object Jobs {
      *
      * @param jobId the ID of the [SimJob] to be canceled.
      */
-    suspend fun cancelJob(jobId: UInt) = mutex.withLock {
-        val job = jobs[jobId] ?: return@withLock
+    suspend fun cancelJob(jobId: UInt) {
+        mutex.withLock {
+            val job = queuedJobs[jobId] ?: return@withLock
 
-        job.cancel()
+            job.cancel()
+            queuedJobs.remove(jobId)
+            finishedJobs[jobId] = job
 
-        Clients.propagateUpdate(job.id, job)
+            Clients.propagateUpdate(job.id, job)
+        }
 
         log.info("Job with ID $jobId canceled.")
     }
@@ -97,65 +113,50 @@ object Jobs {
      *
      * @param jobId the ID of the [SimJob] to be deleted.
      */
-    suspend fun deleteJob(jobId: UInt) = mutex.withLock {
-        val job = jobs[jobId] ?: return@withLock
+    suspend fun deleteJob(jobId: UInt) {
+        mutex.withLock {
+            if (queuedJobs.containsKey(jobId)) {
+                val job = queuedJobs[jobId] ?: return@withLock
 
-        job.cancel()
+                job.cancel()
+                queuedJobs.remove(jobId)
+                job.deleteFiles()
 
-        jobs.remove(jobId)
-        job.deleteFiles()
-        Clients.propagateUpdate(job.id, null)
+                Clients.propagateUpdate(job.id, null)
+            } else {
+                val job = finishedJobs[jobId] ?: return@withLock
+
+                finishedJobs.remove(jobId)
+                job.deleteFiles()
+
+                Clients.propagateUpdate(job.id, null)
+            }
+        }
 
         log.info("Job with ID $jobId deleted.")
     }
 
     /**
-     * Starts a new job worker if needed.
-     */
-    private suspend fun startJobWorker() = mutex.withLock {
-
-        // Worker is already running
-        if (job?.isActive == true) return@withLock
-
-        job = scope.launch {
-            var nextJob: SimJob?
-            while (getNextJob().also { nextJob = it } != null) {
-                nextJob?.execute()
-            }
-
-            log.info("No new job found to execute. Worker will stop for now.")
-        }
-        job?.start()
-    }
-
-    /**
-     * Calculates the [SimJob] to run next.
-     * Partially completed [SimJob]s have a higher priority than new [SimJob]s.
-     *
-     * @return the next [SimJob] to run or `null` if no [SimJob] is left.
-     */
-    private suspend fun getNextJob(): SimJob? = mutex.withLock {
-        val candidates = jobs.asSequence()
-            .filter { it.value.status == JobState.NEW || it.value.status == JobState.RUNNING } // filter for jobs that still need to run
-            .sortedBy { it.key } // sort by id
-            .map { it.value } // only take job
-
-        // first, try to continue running a partially completed job
-        val running = candidates.firstOrNull { it.status == JobState.RUNNING }
-        if (running != null) return running
-
-        return candidates.firstOrNull()
-    }
-
-    /**
      * Reads all [SimJob]s from the [Environment.dataDir].
-     * The [SimJob]s are stored in the [jobs] map.
+     * The [SimJob]s are stored in the correct [Map]s and [Channel].
      */
     private suspend fun readAllJobs() = mutex.withLock {
-        (Environment.dataDir.listFiles()?.toList() ?: listOf<File>()).mapNotNull { file: File? ->
-            var name: UInt = UInt.MAX_VALUE
-            if (file == null || !file.isDirectory || file.name.toUIntOrNull()?.also { name = it } == null) null
-            else Pair(name, SimJob.fromDisk(file))
-        }.toMap(jobs)
+        val dirs = Environment.dataDir.listFiles()?.toList() ?: listOf<File>()
+        val jobs = dirs.mapNotNull { file: File? ->
+            if (file == null || !file.isDirectory || file.name.toUIntOrNull() == null) null
+            else SimJob.fromDisk(file)
+        }
+
+        val finishedJobs =
+            jobs.filter { it.status == JobState.DONE || it.status == JobState.CANCELED }.sortedBy { it.id }
+        val runningJobs = jobs.filter { it.status == JobState.RUNNING }.sortedBy { it.id }
+        val newJobs = jobs.filter { it.status == JobState.NEW }.sortedBy { it.id }
+        val queuedJobs = runningJobs + newJobs
+
+        finishedJobs.associateByTo(this.finishedJobs) { it.id }
+        for (job in queuedJobs) {
+            this.queuedJobs[job.id] = job
+            queue.send(job)
+        }
     }
 }
