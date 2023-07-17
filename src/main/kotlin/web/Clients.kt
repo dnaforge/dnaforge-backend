@@ -84,7 +84,7 @@ object Clients {
         }
 
         log.debug(
-            "A update has been propagated to all clients. The job with ID {} was updated {}",
+            "An update has been propagated to all clients. The job with ID {} was updated {}",
             jobId,
             if (job == null) "doesn't exist anymore." else "still exists."
         )
