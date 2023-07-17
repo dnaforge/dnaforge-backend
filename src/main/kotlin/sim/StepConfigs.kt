@@ -1,11 +1,17 @@
 package sim
 
+import endConfFileName
+import energyFileName
+import forcesFileName
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.decodeFromStream
 import kotlinx.serialization.json.encodeToStream
 import prettyJson
+import startConfFileName
+import topologyFileName
+import trajectoryFileName
 import java.io.File
 
 /**
@@ -137,10 +143,10 @@ sealed class StepConfig {
         this.putAll(encodeToMap())
 
         // input
-        this["topology"] = topologyFileName
+        this["topology"] = "../$topologyFileName"
         this["conf_file"] = startConfFileName
         if (this["external_forces"].toBoolean() || this["external_forces"]?.toIntOrNull() == 1)
-            this["external_forces_file"] = forcesFileName
+            this["external_forces_file"] = "../$forcesFileName"
 
         // output
         this["lastconf_file"] = endConfFileName
@@ -158,14 +164,6 @@ sealed class StepConfig {
         file.writeText(getCleanParameterMap().entries.joinToString("\n") { (key, value) -> "$key = $value" })
 
     companion object {
-        const val inputFileName = "input.properties"
-        const val topologyFileName = "../topology.top"
-        const val startConfFileName = "conf_start.dat"
-        const val forcesFileName = "../forces.forces"
-
-        const val endConfFileName = "conf_end.dat"
-        const val trajectoryFileName = "trajectory.dat"
-        const val energyFileName = "energy.dat"
 
         /**
          * Reads a [StepConfig] from the specified JSON [File].

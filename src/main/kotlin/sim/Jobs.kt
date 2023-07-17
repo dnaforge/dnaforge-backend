@@ -5,6 +5,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.slf4j.LoggerFactory
+import stepFileName
 import web.Clients
 import java.io.File
 
@@ -13,8 +14,6 @@ import java.io.File
  */
 @OptIn(DelicateCoroutinesApi::class)
 object Jobs {
-    const val stepFileName = "step.json"
-
     private val log = LoggerFactory.getLogger(Jobs::class.java)
     private val scope = CoroutineScope(newSingleThreadContext("JobExecutionContext"))
     private var job: Job? = null
@@ -119,7 +118,6 @@ object Jobs {
         if (job?.isActive == true) return@withLock
 
         job = scope.launch {
-            println("Starting...")
             var nextJob: SimJob?
             while (getNextJob().also { nextJob = it } != null) {
                 nextJob?.execute()

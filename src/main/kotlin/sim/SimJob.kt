@@ -1,6 +1,10 @@
 package sim
 
 import Environment
+import endConfFileName
+import forcesFileName
+import inputFileName
+import jobFileName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -12,7 +16,11 @@ import kotlinx.serialization.Transient
 import kotlinx.serialization.json.decodeFromStream
 import kotlinx.serialization.json.encodeToStream
 import org.slf4j.LoggerFactory
+import oxDnaLogFileName
 import prettyJson
+import startConfFileName
+import stepFileName
+import topologyFileName
 import web.Clients
 import java.io.BufferedReader
 import java.io.File
@@ -51,13 +59,13 @@ class SimJob(
     private val file = File(dir, jobFileName)
 
     @Transient
-    val topFile = File(dir, "topology.top")
+    val topFile = File(dir, topologyFileName)
 
     @Transient
-    val startConfFile = File(dir, "conf_start.dat")
+    val startConfFile = File(dir, startConfFileName)
 
     @Transient
-    val forcesFile = File(dir, "forces.forces")
+    val forcesFile = File(dir, forcesFileName)
 
     /**
      * Runs this [SimJob] and updates its status whenever needed.
@@ -106,15 +114,16 @@ class SimJob(
      */
     private suspend fun executeNextStep() {
         log.debug("Running step $completedSteps of the job with ID $id.")
+
         val nextDir = File(dir, completedSteps.toString())
         prepareFilesForNextStep(nextDir)
-        val nextLogFile = File(nextDir, "oxDNA.log")
-        val endConfFile = File(nextDir, StepConfig.endConfFileName)
+        val nextLogFile = File(nextDir, oxDnaLogFileName)
+        val endConfFile = File(nextDir, endConfFileName)
 
         // run oxDNA
         val pb = ProcessBuilder()
         pb.directory(nextDir)
-        pb.command(listOf("oxDNA", "input.properties"))
+        pb.command(listOf("oxDNA", inputFileName))
         // for some reason, oxDNA only writes the energy to std out and everything else to std error
         pb.redirectError(ProcessBuilder.Redirect.appendTo(nextLogFile))
 
@@ -172,9 +181,9 @@ class SimJob(
      */
     private fun prepareFilesForNextStep(nextDir: File) {
         // prepare input file
-        val stepFile = File(nextDir, Jobs.stepFileName)
+        val stepFile = File(nextDir, stepFileName)
         val stepConfig = StepConfig.fromJsonFile(stepFile)
-        val inputFile = File(nextDir, StepConfig.inputFileName)
+        val inputFile = File(nextDir, inputFileName)
         stepConfig.toPropertiesFile(inputFile)
 
         // get and copy conf file of last step
@@ -183,9 +192,9 @@ class SimJob(
                 startConfFile
             } else {
                 val oldDir = File(dir, (completedSteps - 1u).toString())
-                File(oldDir, "conf_end.dat")
+                File(oldDir, endConfFileName)
             }
-        val startConfFile = File(nextDir, "conf_start.dat")
+        val startConfFile = File(nextDir, startConfFileName)
         oldConfFile.copyTo(startConfFile, true)
     }
 
@@ -237,7 +246,6 @@ class SimJob(
 
     companion object {
         private val log = LoggerFactory.getLogger(SimJob::class.java)
-        private const val jobFileName = "job.json"
 
         /**
          * Reads a [SimJob] from the specified directory [File].
