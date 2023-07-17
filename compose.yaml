@@ -5,11 +5,13 @@ services:
     container_name: dnaforge-backend
     runtime: nvidia
     restart: unless-stopped
+    ports:
+      - 8080:8080
     environment:
       # Define the location of the data directory in the container.
       DATADIR: /data/
 
-      # Port number
+      # Port number used in the container
       # If left blank, 80 will be used.
       PORT: 8080
 

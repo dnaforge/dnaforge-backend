@@ -36,8 +36,5 @@ RUN cp /oxDNA/build/bin/* /usr/bin/
 COPY --from=builder /dnaforge-backend/build/install/dnaforge-backend/ /dnaforge-backend/
 
 
-# Keep container running indefinitely (only for now)
-# TODO rm
-ENTRYPOINT ["sleep", "infinity"]
 ## Start server
-#ENTRYPOINT ["dnaforge-backend/bin/dnaforge-backend"]
+ENTRYPOINT ["dnaforge-backend/bin/dnaforge-backend"]

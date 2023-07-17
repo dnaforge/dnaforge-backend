@@ -29,7 +29,8 @@ If you don't want to use Docker Compose, you will need to build the image manual
 #### Usage
 
 With Docker Compose, just run `docker compose up -d`.  
-With pure Docker you need to run`docker run --runtime=nvidia --name dnaforge-backend -d lewimbes/dnaforge-backend`.
+With pure Docker you need to run
+`docker run --runtime=nvidia --name dnaforge-backend -e "DATADIR=/data/" -e "PORT=8080" -p 8080:8080 -d lewimbes/dnaforge-backend`.
 
 ### Bare-metal
 
