@@ -271,6 +271,7 @@ data class ManualConfig(
         // some default options
         this["time_scale"] = "linear"
         this["restart_step_counter"] = true.toString()
+        this["refresh_vel"] = true.toString()
         this["trajectory_print_momenta"] = true.toString()
         this["rcut"] = 2.0f.toString()
     }
@@ -329,9 +330,8 @@ data class MdConfig(
         this.putAll(interactionType.encodeToMap())
         this.putAll(thermostat.encodeToMap())
 
-        this["sim_type"] = SimType.MC.configName
+        this["sim_type"] = SimType.MD.configName
         this["backend"] = if (interactionType.allowsCuda) "CUDA" else "CPU"
-        this["ensemble"] = "nvt"
     }
 }
 
