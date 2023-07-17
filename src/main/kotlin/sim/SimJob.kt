@@ -83,6 +83,7 @@ class SimJob(
             }
         }
         if (cancel) return@withLock
+        unlockedToDisk()
         Clients.propagateUpdate(this.id, this)
 
         while (completedSteps < steps) {
@@ -90,6 +91,7 @@ class SimJob(
             if (cancelMutex.withLock { shouldStopExecution() }) break
 
             executeNextStep()
+            unlockedToDisk()
             Clients.propagateUpdate(this.id, this)
         }
 
@@ -98,6 +100,7 @@ class SimJob(
             if (status != JobState.CANCELED)
                 status = JobState.DONE
         }
+        unlockedToDisk()
         Clients.propagateUpdate(this.id, this)
 
         log.info("Execution of the job with ID $id finished.")
@@ -220,14 +223,22 @@ class SimJob(
         log.info("The job with ID $id has been canceled.")
     }
 
+
     /**
      * Writes the current state of this [SimJob] to disk.
      */
     @OptIn(ExperimentalSerializationApi::class)
+    private fun unlockedToDisk() {
+        dir.mkdirs()
+        file.outputStream().use { prettyJson.encodeToStream(this, it) }
+    }
+
+    /**
+     * Writes the current state of this [SimJob] to disk.
+     */
     suspend fun toDisk() {
         mutex.withLock {
-            dir.mkdirs()
-            file.outputStream().use { prettyJson.encodeToStream(this, it) }
+            unlockedToDisk()
         }
 
         log.debug("Wrote the job with ID $id to disk.")

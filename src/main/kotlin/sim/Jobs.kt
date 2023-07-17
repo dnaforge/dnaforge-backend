@@ -39,8 +39,11 @@ object Jobs {
             readAllJobs()
 
             // determine next ID
-            nextId = getJobs().maxOfOrNull { it.id } ?: 0u
+            nextId = getJobs().maxOfOrNull { it.id + 1u } ?: 0u
         }
+
+        log.debug("Finished jobs:\n     ${finishedJobs.values.joinToString("\n     ")}")
+        log.debug("Queued jobs:\n     ${queuedJobs.values.joinToString("\n     ")}")
 
         coroutineJob = scope.launch {
             for (job in queue) {
