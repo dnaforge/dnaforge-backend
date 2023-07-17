@@ -21,3 +21,6 @@ services:
       # Use a reverse proxy and https, otherwise the token will be transmitted over an unencrypted connection.
       # If left blank, access is possible without any authentication.
       ACCESSTOKEN: ChangeMe
+
+      # Specify the logging level. Possible values: ALL, TRACE, DEBUG, INFO, WARN, ERROR, OFF
+      LOGLEVEL: INFO
