@@ -16,6 +16,7 @@ fun startWebServer() {
 /**
  * Registers modules on a Ktor web server.
  */
-private fun Application.module() {
+fun Application.module() {
+    configureRoutes()
     configureWebSocket()
 }
