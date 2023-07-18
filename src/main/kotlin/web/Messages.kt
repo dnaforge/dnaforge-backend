@@ -6,7 +6,7 @@ import sim.SimJob
 import sim.StepConfig
 
 /**
- * [Message] is a sealed interface and must be implemented by all possible messages sent between client and server.
+ * [Message] is a sealed interface and must be implemented by all possible messages sent between a client and server.
  * This allows automatic (de)serialization.
  */
 @Serializable
@@ -86,4 +86,4 @@ data class JobSubscribe(val jobId: UInt?) : Message
  */
 @Serializable
 @SerialName("DetailedUpdate")
-data class DetailedUpdate(val conf: String) : Message
+data class DetailedUpdate(val job: SimJob, val conf: String) : Message

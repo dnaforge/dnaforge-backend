@@ -38,7 +38,7 @@ fun Application.configureWebSocket() {
                     continue // ignore invalid messages
                 }
 
-                // forward message to client
+                // forward message to the client
                 client.handleMessage(message)
             }
 

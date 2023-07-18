@@ -139,7 +139,7 @@ sealed class StepConfig {
      *
      * @return a new [Map] containing the properties of this [StepConfig] and some default values.
      */
-    private fun getCleanParameterMap(): Map<String, String> = buildMap {
+    fun getParameterMap(): Map<String, String> = buildMap {
         this.putAll(encodeToMap())
 
         // input
@@ -161,7 +161,7 @@ sealed class StepConfig {
      * @param file the file to write to. Existing content is overwritten.
      */
     fun toPropertiesFile(file: File) =
-        file.writeText(getCleanParameterMap().entries.joinToString("\n") { (key, value) -> "$key = $value" })
+        file.writeText(getParameterMap().entries.joinToString("\n") { (key, value) -> "$key = $value" })
 
     companion object {
 

@@ -64,7 +64,7 @@ data class Client(val session: WebSocketServerSession) {
         val success = allowed || Environment.allowAccess(accessToken)
         if (success) allowed = true
 
-        // only send message if the client tried to authenticate or authentication was successful
+        // only send the message if the client tried to authenticate or authentication was successful
         if (accessToken != null || success)
             sendMessage(AuthenticationResponse(success))
 

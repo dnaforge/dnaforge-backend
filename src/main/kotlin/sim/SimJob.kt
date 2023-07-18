@@ -28,18 +28,16 @@ import java.io.IOException
 import java.io.InputStreamReader
 import java.util.concurrent.TimeUnit
 
-// TODO consider private setters and a custom de-/serializer
 /**
  * This class represents a job.
  */
 @Serializable
-class SimJob(
+data class SimJob(
     val id: UInt,
     val steps: UInt,
     var completedSteps: UInt = 0u,
     var status: JobState = JobState.NEW,
-    val statusMessage: String? = null,
-    val progress: Float = 0.0f,
+    var progress: Float = 0.0f,
     var error: String? = null
 ) {
     @Transient
@@ -66,6 +64,17 @@ class SimJob(
 
     @Transient
     val forcesFile = File(dir, forcesFileName)
+
+    private val simSteps: List<UInt> by lazy {
+        buildList {
+            for (i in 0u..<steps) {
+                val stepDir = File(dir, i.toString())
+                val stepFile = File(stepDir, stepFileName)
+                val stepConfig = StepConfig.fromJsonFile(stepFile)
+                this.add(stepConfig.getParameterMap()["steps"]?.toUIntOrNull() ?: 0u)
+            }
+        }
+    }
 
     /**
      * Runs this [SimJob] and updates its status whenever needed.
@@ -144,15 +153,23 @@ class SimJob(
 
         // we use the fact that the print interval of the trajectory and energy are the same to push detailed updates to clients
         withContext(Dispatchers.IO) {
-            var line: String? = ""
-            while (line != null) {
+            var line: String?
+            while (true) {
                 line = try {
                     energyStream?.readLine()
                 } catch (e: IOException) {
                     null
                 }
-                if (line != null)
-                    Clients.propagateDetailedUpdate(id, endConfFile.readText())
+                if (line == null) break
+
+                val currentConf = endConfFile.readText()
+                val completedInCurrentConf =
+                    currentConf.lineSequence().firstOrNull { it.startsWith("t = ") }?.substring("t = ".length)
+                        ?.toUIntOrNull() ?: 0u
+                val totalSimSteps = simSteps.sum()
+                val completedSimSteps = simSteps.subList(0, completedSteps.toInt()).sum() + completedInCurrentConf
+                this@SimJob.progress = completedSimSteps.toFloat() / totalSimSteps.toFloat()
+                Clients.propagateDetailedUpdate(this@SimJob, currentConf)
             }
         }
 
@@ -164,7 +181,7 @@ class SimJob(
             completedSteps++
         } else {
             error = nextLogFile.useLines {
-                it.filter { it.startsWith("ERROR:") }.firstOrNull()?.substring("ERROR: ".length)
+                it.firstOrNull { line -> line.startsWith("ERROR:") }?.substring("ERROR: ".length)
             }
 
             // abort next steps

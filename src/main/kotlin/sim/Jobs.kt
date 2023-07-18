@@ -16,8 +16,6 @@ import java.io.File
 @OptIn(DelicateCoroutinesApi::class)
 object Jobs {
     private val log = LoggerFactory.getLogger(Jobs::class.java)
-    private val scope = CoroutineScope(newSingleThreadContext("JobExecutionContext"))
-    private val coroutineJob: Job
     private val mutex = Mutex()
 
     private var nextId: UInt
@@ -45,15 +43,16 @@ object Jobs {
         log.debug("Finished jobs:\n     ${finishedJobs.values.joinToString("\n     ")}")
         log.debug("Queued jobs:\n     ${queuedJobs.values.joinToString("\n     ")}")
 
-        coroutineJob = scope.launch {
+        val scope = CoroutineScope(newSingleThreadContext("JobExecutionContext"))
+        val coroutineJob = scope.launch {
             for (job in queue) {
-                // check if job is actually still queued or not
+                // check if the job is actually still queued or not
                 if (!mutex.withLock { queuedJobs.containsKey(job.id) }) continue
 
 
                 job.execute()
 
-                // move job to finished jobs
+                // move the job to finished jobs
                 mutex.withLock {
                     queuedJobs.remove(job.id)
                     finishedJobs[job.id] = job

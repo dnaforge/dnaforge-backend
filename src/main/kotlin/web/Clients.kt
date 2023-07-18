@@ -54,15 +54,15 @@ object Clients {
     /**
      * Sends a detailed update to all [Client]s subscribed to the [SimJob] specified by the ID.
      *
-     * @param jobId the ID of the [SimJob] that encountered an update.
+     * @param job the [SimJob] that encountered an update.
      * @param conf the update data.
      */
-    suspend fun propagateDetailedUpdate(jobId: UInt, conf: String) {
+    suspend fun propagateDetailedUpdate(job: SimJob, conf: String) {
         mutex.withLock {
-            jobIdSubscribedClient[jobId]?.forEach { it.sendMessage(DetailedUpdate(conf)) }
+            jobIdSubscribedClient[job.id]?.forEach { it.sendMessage(DetailedUpdate(job, conf)) }
         }
 
-        log.debug("A detailed update has been propagated to all clients subscribed to the job with ID {}", jobId)
+        log.debug("A detailed update has been propagated to all clients subscribed to the job with ID {}", job.id)
     }
 
     /**
@@ -73,7 +73,7 @@ object Clients {
      */
     suspend fun propagateUpdate(jobId: UInt, job: SimJob?) {
         mutex.withLock {
-            // remove subscriptions if job is deleted
+            // remove subscriptions if the job is deleted
             if (job == null) {
                 jobIdSubscribedClient[jobId]?.forEach { clientSubscribedJobId.remove(it) }
                 jobIdSubscribedClient.remove(jobId)
