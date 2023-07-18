@@ -31,6 +31,9 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
+
+    environment("DATADIR", "./data")
+    environment("ACCESSTOKEN", "TestToken")
 }
 
 kotlin {
