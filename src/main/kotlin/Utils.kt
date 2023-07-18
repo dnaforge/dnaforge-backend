@@ -23,15 +23,18 @@ const val oxDnaLogFileName = "oxDNA.log"
 
 /**
  * [Json] with default and `null` encoding.
+ * Ignores unknown keys.
  */
 @OptIn(ExperimentalSerializationApi::class)
 val simpleJson = Json {
     encodeDefaults = true
     explicitNulls = true
+    ignoreUnknownKeys = true
 }
 
 /**
  * [Json] with default and `null` encoding.
+ * Ignores unknown keys.
  * Pretty print is enabled.
  */
 @OptIn(ExperimentalSerializationApi::class)
@@ -39,6 +42,7 @@ val prettyJson = Json {
     prettyPrint = true
     encodeDefaults = true
     explicitNulls = true
+    ignoreUnknownKeys = true
 }
 
 

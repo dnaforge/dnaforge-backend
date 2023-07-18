@@ -4,6 +4,7 @@ import io.ktor.server.application.*
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
 import io.ktor.websocket.*
+import kotlinx.serialization.encodeToString
 import simpleJson
 import java.time.Duration
 
@@ -19,12 +20,7 @@ fun Application.configureWebSocket() {
     routing {
         webSocket("/") {
             // handle connect
-            val client = Client(this)
-            Clients.addClient(client)
-
-            // authentication might not be required
-            client.handleMessage(Authenticate(""))
-
+            var client: Client? = null
 
             for (frame in incoming) {
                 // handling frames that aren't text frames
@@ -38,12 +34,21 @@ fun Application.configureWebSocket() {
                     continue // ignore invalid messages
                 }
 
-                // forward message to the client
-                client.handleMessage(message)
+                // the client should only send authentication messages over the WebSocket
+                // the REST API handles everything else
+                if (client == null && message is WebSocketAuth) {
+                    client = Clients.authenticate(message.bearerToken, this)
+
+                    val response: Message = WebSocketAuthResponse(client != null)
+                    send(Frame.Text(simpleJson.encodeToString(response)))
+                }
+
+                // TODO: migrate to REST API
+                client?.handleMessage(message)
             }
 
             // handle disconnect
-            Clients.removeClient(client)
+            client?.let { Clients.disconnect(it) }
         }
     }
 }
@@ -53,4 +58,4 @@ fun Application.configureWebSocket() {
  *
  * @return a new [Message] instance
  */
-private fun Frame.Text.toMessage(): Message = simpleJson.decodeFromString(readText())
+fun Frame.Text.toMessage(): Message = simpleJson.decodeFromString(readText())

@@ -13,21 +13,29 @@ import sim.StepConfig
 sealed interface Message
 
 /**
- * Sent by a client.
- * Authenticates the client with the given [accessToken].
- * The server responds with an [AuthenticationResponse] to indicate success or failure.
+ * Sent by the server.
+ * Notifies the client of their personal bearer token.
  */
 @Serializable
-@SerialName("Authenticate")
-data class Authenticate(val accessToken: String) : Message
+@SerialName("AuthResponse")
+data class AuthResponse(val bearerToken: String) : Message
 
 /**
- * Sent by the server.
- * Notifies the client whether its authentication attempt was successful or not.
+ * Sent by a client via a WebSocket.
+ * Authenticates the client's WebSocket with the given [bearerToken].
+ * If the [bearerToken] is valid, the WebSocket session will be associated with the correct client.
  */
 @Serializable
-@SerialName("AuthenticationResponse")
-data class AuthenticationResponse(val success: Boolean) : Message
+@SerialName("WebSocketAuth")
+data class WebSocketAuth(val bearerToken: String) : Message
+
+/**
+ * Sent by a server via a WebSocket.
+ * Notifies the client whether its authentication attempt was successful.
+ */
+@Serializable
+@SerialName("WebSocketAuthResponse")
+data class WebSocketAuthResponse(val success: Boolean) : Message
 
 /**
  * Sent by the server.

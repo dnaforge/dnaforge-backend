@@ -1,23 +1,27 @@
 # Protocol
 
-This document describes the communication protocol between client and server.  
-All messages are in json format and should be sent over the WebSocket.
+This document describes the communication protocol between clients and the server.
+All messages must be encoded in JSON format.
 
 ## Authentication
 
-If authentication is not enabled (`ACCESSTOKEN` environment variable is blank), the server sends an authentication
-success message upon connection.
+The first action a client must take is to authenticate itself and obtain a bearer token.  
+The server expects the correct access token in the authorization header field.  
+If authentication is not enabled (the `ACCESSTOKEN` environment variable is blank)
+the server will accept any value as a valid access token.
 
 ```
-SERVER -> authenticated -> CLIENT
+CLIENT -> GET/auth: Authorization = SomeToken
+SERVER -> AuthResponse(bearerToken: String)
 ```
 
-If authentication is enabled (non-blank `ACCESSTOKEN` environment variable), a client must first send an
-authentication request.
+This bearer token is used to identify each client,
+must be sent with each request in the authorization header field and once through the WebSocket.
+
 
 ```
-CLIENT -> authenticate(accesstoken) -> SERVER
-SERVER -> un-/authenticated -> CLIENT
+CLIENT -> WS/: WebSocketAuth(bearerToken: String)
+SERVER -> WebSocketAuthResponse(success: Boolean)
 ```
 
 ### Examples

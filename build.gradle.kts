@@ -29,6 +29,7 @@ dependencies {
 
     testImplementation(kotlin("test", kotlinVersion))
     testImplementation("io.ktor", "ktor-server-tests-jvm", ktorVersion)
+    testImplementation("io.ktor", "ktor-client-content-negotiation", ktorVersion)
 }
 
 tasks.test {
@@ -36,6 +37,8 @@ tasks.test {
 
     environment("DATADIR", "./data")
     environment("ACCESSTOKEN", "TestToken")
+    environment("PORT", 8080)
+    environment("LOGLEVEL", "ALL")
 }
 
 kotlin {

@@ -1,6 +1,5 @@
 package web
 
-import Environment
 import io.ktor.server.websocket.*
 import io.ktor.websocket.*
 import kotlinx.serialization.encodeToString
@@ -10,10 +9,9 @@ import simpleJson
 
 /**
  * This class represents a client connected to this application.
- * [session] is the corresponding [WebSocketServerSession].
+ * [bearerToken] is the corresponding bearer token and [session] is the corresponding [WebSocketServerSession].
  */
-data class Client(val session: WebSocketServerSession) {
-    private var allowed: Boolean = false
+data class Client(val bearerToken: String, var session: WebSocketServerSession? = null) {
 
     companion object {
         private val log = LoggerFactory.getLogger(Client::class.java)
@@ -27,15 +25,6 @@ data class Client(val session: WebSocketServerSession) {
     suspend fun handleMessage(message: Message) {
         log.debug("A message has been received.")
 
-        // handle authentication request
-        if (message is Authenticate) {
-            updateAllowed(message.accessToken)
-            return
-        }
-
-        // ignore messages from unauthenticated clients
-        if (!allowed) return
-
         // handle other message types
         when (message) {
             is JobNew -> Jobs.submitNewJob(message.configs, message.top, message.dat, message.forces)
@@ -47,30 +36,10 @@ data class Client(val session: WebSocketServerSession) {
     }
 
     /**
-     * Sends a [Message] to this [Client].
+     * Sends a [Message] to this [Client] if it has a corresponding WebSocket session.
      *
      * @param message the [Message] to send.
      */
-    suspend fun sendMessage(message: Message) =
-        session.outgoing.send(Frame.Text(simpleJson.encodeToString(message)))
-
-    /**
-     * Checks if the given [accessToken] is valid and updates the [allowed] status accordingly.
-     * If this [Client] has already been authenticated, nothing changes.
-     *
-     * @param accessToken the token to use for this authentication attempt.
-     */
-    private suspend fun updateAllowed(accessToken: String?) {
-        val success = allowed || Environment.allowAccess(accessToken)
-        if (success) allowed = true
-
-        // only send the message if the client tried to authenticate or authentication was successful
-        if (accessToken != null || success)
-            sendMessage(AuthenticationResponse(success))
-
-        if (allowed) {
-            sendMessage(JobList(Jobs.getJobs()))
-            log.debug("A client authenticated successfully.")
-        }
-    }
+    suspend fun trySendMessage(message: Message) =
+        session?.outgoing?.send(Frame.Text(simpleJson.encodeToString(message)))
 }
