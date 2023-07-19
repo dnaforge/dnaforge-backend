@@ -9,7 +9,6 @@ import io.ktor.websocket.*
 import kotlin.test.*
 
 class AuthenticationTest {
-    // TODO: test messages without auth
 
     @Test
     fun `missing token doesn't work`() = testApplication {
@@ -39,10 +38,8 @@ class AuthenticationTest {
             header(HttpHeaders.Authorization, "TestToken")
         }.apply {
             assertEquals(HttpStatusCode.OK, status)
-            val response: Message = body()
-            assertIs<AuthResponse>(response)
-            assertTrue(response.bearerToken.isNotBlank())
-            assertEquals(32, response.bearerToken.length)
+            val response: String = body()
+            assertEquals(32, response.length)
         }
     }
 
@@ -66,12 +63,11 @@ class AuthenticationTest {
     fun `ws assignment doesn't work with incorrect token`() = testApplication {
         val client = prepare()
 
-        val bearerToken = client.get("/auth") {
+        val bearerToken: String = client.get("/auth") {
             header(HttpHeaders.Authorization, "TestToken")
         }.run {
             assertEquals(HttpStatusCode.OK, status)
-            val response: Message = body()
-            (response as AuthResponse).bearerToken
+            body()
         }
 
         client.ws("/") {
@@ -90,12 +86,11 @@ class AuthenticationTest {
     fun `ws assignment works with correct token`() = testApplication {
         val client = prepare()
 
-        val bearerToken = client.get("/auth") {
+        val bearerToken: String = client.get("/auth") {
             header(HttpHeaders.Authorization, "TestToken")
         }.run {
             assertEquals(HttpStatusCode.OK, status)
-            val response: Message = body()
-            (response as AuthResponse).bearerToken
+            body()
         }
 
         client.ws("/") {

@@ -39,12 +39,9 @@ fun Application.configureWebSocket() {
                 if (client == null && message is WebSocketAuth) {
                     client = Clients.authenticate(message.bearerToken, this)
 
-                    val response: Message = WebSocketAuthResponse(client != null)
+                    val response: WebSocketMessage = WebSocketAuthResponse(client != null)
                     send(Frame.Text(simpleJson.encodeToString(response)))
                 }
-
-                // TODO: migrate to REST API
-                client?.handleMessage(message)
             }
 
             // handle disconnect
@@ -54,8 +51,8 @@ fun Application.configureWebSocket() {
 }
 
 /**
- * Tries to decode the text in this [Frame.Text] into a [Message].
+ * Tries to decode the text in this [Frame.Text] into a [WebSocketMessage].
  *
- * @return a new [Message] instance
+ * @return a new [WebSocketMessage] instance
  */
-fun Frame.Text.toMessage(): Message = simpleJson.decodeFromString(readText())
+fun Frame.Text.toMessage(): WebSocketMessage = simpleJson.decodeFromString(readText())

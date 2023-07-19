@@ -11,42 +11,47 @@ If authentication is not enabled (the `ACCESSTOKEN` environment variable is blan
 the server will accept any value as a valid access token.
 
 ```
-CLIENT -> GET/auth: Authorization = SomeToken
-SERVER -> AuthResponse(bearerToken: String)
+CLIENT -> GET/auth
+SERVER -> String
 ```
 
 This bearer token is used to identify each client,
 must be sent with each request in the authorization header field and once through the WebSocket.
-
 
 ```
 CLIENT -> WS/: WebSocketAuth(bearerToken: String)
 SERVER -> WebSocketAuthResponse(success: Boolean)
 ```
 
-### Examples
-
-TODO
-
-## Jobs list update
-
-Upon successful authentication, the server provides the client with a list of available jobs and their status.
-
-```
-SERVER -> jobs(list(job)) -> CLIENT
-```
+Once a WebSocket has been successfully associated with a client,
+the client will receive updates on the status of jobs through it.  
+If a client is subscribed to a particular job, more detailed updates are also provided.  
+See [Job Update](#job-update) and [Detailed Job Update](#detailed-job-update) for more details.
 
 ### Examples
 
 TODO
 
-## Single Job Update
+## Get Job list
 
-If the state of a single job changes, the server will not send a list of all jobs, but only an update for that single
-job.
+A client can get the list of all jobs via a simple GET request.
 
 ```
-SERVER -> update(job_id, job?) -> CLIENT
+CLIENT -> GET/job
+SERVER -> List<SimJob>
+```
+
+### Examples
+
+TODO
+
+## Get Job
+
+A client can retrieve a single job by its ID.
+
+```
+CLIENT -> GET/job/<ID>
+SERVER -> SimJob
 ```
 
 ### Examples
@@ -55,22 +60,11 @@ TODO
 
 ## New Job
 
-When the client submits a new job, the server responds with a single job update (see above).
+A new job can be submitted using a POST request.
 
 ```
-CLIENT -> new(job) -> SERVER
-```
-
-### Examples
-
-TODO
-
-## Cancel Job
-
-When the client cancels a job, the server responds with a single job update (see above).
-
-```
-CLIENT -> cancel(job_id) -> SERVER
+CLIENT -> POST/job: JobNew(configs: List<StepConfig>, top: String, dat: String, forces: String)
+SERVER -> SimJob
 ```
 
 ### Examples
@@ -79,10 +73,35 @@ TODO
 
 ## Delete Job
 
-When the client deletes a job, the server responds with a single job update (see above).
+A job can be deleted by its ID using a DELETE request.
 
 ```
-CLIENT -> delete(job_id) -> SERVER
+CLIENT -> DELETE/job/<ID>
+```
+
+### Examples
+
+TODO
+
+## Cancel Job
+
+A job can be canceled by its ID using a PATCH request.
+
+```
+CLIENT -> PATCH/job/<ID>
+```
+
+### Examples
+
+TODO
+
+## Unsubscribe
+
+If a client doesn't want to receive detailed updates anymore, they can unsubscribe with a POST request.  
+Normal job updates will still be delivered.
+
+```
+CLIENT -> POST/job/unsubscribe
 ```
 
 ### Examples
@@ -91,22 +110,36 @@ TODO
 
 ## Subscribe Job
 
-If the customer wants to receive detailed job and structure updates, they can subscribe to a job.
+If a client wants to receive detailed updates for a job, they can subscribe with a POST request.  
+Normal job updates will still be delivered.
 
 ```
-CLIENT -> subscribe(job_id?) -> SERVER
+CLIENT -> POST/job/subscribe/<ID>
 ```
 
 ### Examples
 
 TODO
 
-## Detailed Update
+## Job Update
+
+If the state of a single job changes, the server will send an update for that job.  
+If the job field is `null`, the job corresponding to the ID has been deleted.
+
+```
+SERVER -> WS/JobUpdate(jobId: UInt, job: SimJob?)
+```
+
+### Examples
+
+TODO
+
+## Detailed Job Update
 
 The server provides a client with detailed job updates when the client is subscribed to a job.
 
 ```
-SERVER -> detailed_update(job_id) -> CLIENT
+SERVER -> DetailedUpdate(job: SimJob, val conf: String)
 ```
 
 ### Examples

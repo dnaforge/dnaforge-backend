@@ -27,36 +27,43 @@ object Clients {
     private val clientSubscribedJobId = mutableMapOf<Client, UInt>()
     private val jobIdSubscribedClient = mutableMapOf<UInt, MutableList<Client>>()
 
-
     /**
-     * Un-/Subscribes the specified [Client] from the [SimJob] specified by the ID.
+     * Unsubscribes the specified [Client] from any [SimJob].
      *
      * @param client the [Client] whose subscriptions should be adjusted.
-     * @param jobId the ID of the [SimJob] the [Client] should subscribe to; `null` if subscriptions should be unsubscribed.
      */
-    suspend fun subscribe(client: Client, jobId: UInt?) {
+    suspend fun unsubscribe(client: Client) {
         mutex.withLock {
-            if (jobId == null) {
-                // remove subscription
-                val oldId = clientSubscribedJobId.remove(client)
-                jobIdSubscribedClient[oldId]?.remove(client)
+            // remove subscription
+            val oldId = clientSubscribedJobId.remove(client)
+            jobIdSubscribedClient[oldId]?.remove(client)
 
-                // Remove entry when no more clients are subscribed
-                if (jobIdSubscribedClient[oldId]?.isEmpty() == true)
-                    jobIdSubscribedClient.remove(oldId)
-                Unit
-            } else {
-                // add subscription
-                jobIdSubscribedClient[jobId]?.add(client) ?: run {
-                    jobIdSubscribedClient[jobId] = mutableListOf(client)
-                }
+            // Remove entry when no more clients are subscribed
+            if (jobIdSubscribedClient[oldId]?.isEmpty() == true)
+                jobIdSubscribedClient.remove(oldId)
+        }
+
+        log.debug("A client has unsubscribed from all jobs.")
+    }
+
+    /**
+     * Subscribes the specified [Client] from the [SimJob] specified by the ID.
+     *
+     * @param client the [Client] whose subscriptions should be adjusted.
+     * @param jobId the ID of the [SimJob] the [Client] should subscribe to.
+     */
+    suspend fun subscribe(client: Client, jobId: UInt) {
+        // unsubscribe from old subscriptions first
+        unsubscribe(client)
+
+        mutex.withLock {
+            // add subscription
+            jobIdSubscribedClient[jobId]?.add(client) ?: run {
+                jobIdSubscribedClient[jobId] = mutableListOf(client)
             }
         }
 
-        if (jobId == null)
-            log.debug("A client has unsubscribed from all jobs.")
-        else
-            log.debug("A client has subscribed to the job with ID {}", jobId)
+        log.debug("A client has subscribed to the job with ID {}", jobId)
     }
 
     /**
@@ -150,6 +157,15 @@ object Clients {
     }
 
     /**
+     * Looks up the [Client] corresponding to the given [bearerToken].
+     *
+     * @param bearerToken the token to look up.
+     *
+     * @return the corresponding [Client] or `null` if no [Client] was found.
+     */
+    suspend fun getClientByBearerToken(bearerToken: String?): Client? = mutex.withLock { tokenClientsMap[bearerToken] }
+
+    /**
      * Removes a [Client] from the set of connections.
      *
      * @param client the [Client] to be removed.
@@ -160,8 +176,8 @@ object Clients {
             clients.remove(client.session)
         }
 
-        // remove old subscriptions
-        subscribe(client, null)
+        // remove subscriptions
+        unsubscribe(client)
 
         log.info("The client with bearer token {} disconnected.", client.bearerToken)
     }

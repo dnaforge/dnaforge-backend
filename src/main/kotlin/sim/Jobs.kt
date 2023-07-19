@@ -30,7 +30,17 @@ object Jobs {
      *
      * @return a new [List] with all known [SimJob]s.
      */
-    suspend fun getJobs() = mutex.withLock { finishedJobs.values + queuedJobs.values }
+    suspend fun getJobs(): List<SimJob> = mutex.withLock { finishedJobs.values + queuedJobs.values }
+
+
+    /**
+     * Gets the [SimJob] with the specified [jobId].
+     *
+     * @param jobId the ID of the [SimJob] to get.
+     *
+     * @return a [SimJob] with the given ID if it exists; otherwise `null`.
+     */
+    suspend fun getJob(jobId: UInt): SimJob? = mutex.withLock { finishedJobs[jobId] ?: queuedJobs[jobId] }
 
     init {
         runBlocking {
@@ -69,7 +79,7 @@ object Jobs {
     /**
      * Creates a new [SimJob] and adds it to the execution queue.
      */
-    suspend fun submitNewJob(configs: List<StepConfig>, top: String, dat: String, forces: String) {
+    suspend fun submitNewJob(configs: List<StepConfig>, top: String, dat: String, forces: String): SimJob {
         val id = mutex.withLock {
             nextId++
         }
@@ -98,6 +108,7 @@ object Jobs {
         }
 
         log.info("New job with ID $id submitted.")
+        return job
     }
 
     /**

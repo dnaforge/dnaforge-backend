@@ -28,9 +28,9 @@ fun ApplicationTestBuilder.prepare(): HttpClient {
 }
 
 /**
- * Sends a [Message].
+ * Sends a [WebSocketMessage].
  *
- * @param message the [Message] to send.
+ * @param message the [WebSocketMessage] to send.
  */
-suspend fun ClientWebSocketSession.sendMessage(message: Message) =
+suspend fun ClientWebSocketSession.sendMessage(message: WebSocketMessage) =
     send(Frame.Text(simpleJson.encodeToString(message)))
