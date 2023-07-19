@@ -1,6 +1,8 @@
+package dnaforge.backend
+
 import org.slf4j.LoggerFactory
-import sim.Jobs
-import web.startWebServer
+import dnaforge.backend.sim.Jobs
+import dnaforge.backend.web.startWebServer
 
 
 private val log = LoggerFactory.getLogger("Main")

@@ -1,3 +1,5 @@
+package dnaforge.backend
+
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import org.slf4j.Logger
@@ -55,3 +57,16 @@ fun Logger.error(exception: Throwable): Nothing {
     error(exception.message ?: "Exception of type \"${exception::class.qualifiedName}\"", exception)
     throw exception
 }
+
+/**
+ * Indicates an internal API that should not be used without knowing exactly what it does.
+ * Typically used to provide functions needed for some tests.
+ */
+@RequiresOptIn(
+    level = RequiresOptIn.Level.ERROR,
+    message = "This API is internal and should not be used!"
+)
+@Target(
+    AnnotationTarget.FUNCTION
+)
+annotation class InternalAPI

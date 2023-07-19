@@ -1,12 +1,12 @@
-package web
+package dnaforge.backend.web
 
-import Environment
+import dnaforge.backend.Environment
 import io.ktor.server.websocket.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.slf4j.LoggerFactory
-import sim.Jobs
-import sim.SimJob
+import dnaforge.backend.sim.Jobs
+import dnaforge.backend.sim.SimJob
 import java.security.SecureRandom
 import java.util.*
 import kotlin.streams.asSequence

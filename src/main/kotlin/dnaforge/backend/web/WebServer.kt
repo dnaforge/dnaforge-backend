@@ -1,6 +1,6 @@
-package web
+package dnaforge.backend.web
 
-import Environment
+import dnaforge.backend.Environment
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*

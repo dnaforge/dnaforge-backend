@@ -1,13 +1,14 @@
-package sim
+package dnaforge.backend.sim
 
-import Environment
+import dnaforge.backend.Environment
+import dnaforge.backend.InternalAPI
+import dnaforge.backend.stepFileName
+import dnaforge.backend.web.Clients
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.slf4j.LoggerFactory
-import stepFileName
-import web.Clients
 import java.io.File
 
 /**
@@ -17,6 +18,7 @@ import java.io.File
 object Jobs {
     private val log = LoggerFactory.getLogger(Jobs::class.java)
     private val mutex = Mutex()
+    private var scope = CoroutineScope(newSingleThreadContext("JobExecutionContext"))
 
     private var nextId: UInt
 
@@ -53,7 +55,6 @@ object Jobs {
         log.debug("Finished jobs:\n     ${finishedJobs.values.joinToString("\n     ")}")
         log.debug("Queued jobs:\n     ${queuedJobs.values.joinToString("\n     ")}")
 
-        val scope = CoroutineScope(newSingleThreadContext("JobExecutionContext"))
         val coroutineJob = scope.launch {
             for (job in queue) {
                 // check if the job is actually still queued or not
@@ -175,10 +176,37 @@ object Jobs {
         val newJobs = jobs.filter { it.status == JobState.NEW }.sortedBy { it.id }
         val queuedJobs = runningJobs + newJobs
 
-        finishedJobs.associateByTo(this.finishedJobs) { it.id }
+        finishedJobs.associateByTo(Jobs.finishedJobs) { it.id }
         for (job in queuedJobs) {
-            this.queuedJobs[job.id] = job
+            Jobs.queuedJobs[job.id] = job
             queue.send(job)
+        }
+    }
+
+    /**
+     * Cancels the [CoroutineScope] used to execute [SimJob]s.
+     * Useful to prevent execution during testing.
+     */
+    @InternalAPI
+    internal fun inhibitJobExecution() = scope.cancel()
+
+
+    /**
+     * Resets the state of this object.
+     * Useful during testing.
+     */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @InternalAPI
+    internal fun resetState() {
+        runBlocking {
+            nextId = 0u
+            finishedJobs.clear()
+            queuedJobs.clear()
+            while (!queue.isEmpty)
+                queue.receive()
+
+            // in case inhibitJobExecution was called
+            scope = CoroutineScope(newSingleThreadContext("JobExecutionContext"))
         }
     }
 }

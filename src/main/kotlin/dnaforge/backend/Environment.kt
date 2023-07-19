@@ -1,3 +1,5 @@
+package dnaforge.backend
+
 import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.LoggerContext
 import org.slf4j.Logger
@@ -59,12 +61,12 @@ object Environment {
         if (dataPath == null)
             log.error(IllegalArgumentException("Missing data directory. Set environment variable \"DATADIR\""))
 
-        this.accessToken = accessToken
+        Environment.accessToken = accessToken
         dataDir = File(dataPath)
-        this.port = port
-        this.host = host
+        Environment.port = port
+        Environment.host = host
 
-        log.info("AccessToken: \"${this.accessToken}\"")
+        log.info("AccessToken: \"${Environment.accessToken}\"")
         log.info("Data directory: \"$dataDir\"")
         log.info("Address: \"$host:$port\"")
 

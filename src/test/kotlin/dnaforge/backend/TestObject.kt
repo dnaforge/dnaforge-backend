@@ -1,3 +1,5 @@
+package dnaforge.backend
+
 import kotlinx.serialization.Serializable
 
 @Serializable

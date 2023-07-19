@@ -1,4 +1,4 @@
-package web
+package dnaforge.backend.web
 
 import io.ktor.client.request.*
 import io.ktor.client.statement.*

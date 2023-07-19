@@ -1,3 +1,5 @@
+package dnaforge.backend
+
 import kotlinx.serialization.encodeToString
 import org.slf4j.LoggerFactory
 import kotlin.test.Test

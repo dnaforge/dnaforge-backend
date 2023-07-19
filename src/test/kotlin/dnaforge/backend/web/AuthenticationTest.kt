@@ -1,4 +1,4 @@
-package web
+package dnaforge.backend.web
 
 import io.ktor.client.call.*
 import io.ktor.client.plugins.websocket.*

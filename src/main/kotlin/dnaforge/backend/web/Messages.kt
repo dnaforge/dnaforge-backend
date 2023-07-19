@@ -1,9 +1,9 @@
-package web
+package dnaforge.backend.web
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import sim.SimJob
-import sim.StepConfig
+import dnaforge.backend.sim.SimJob
+import dnaforge.backend.sim.StepConfig
 
 /**
  * Sent by a client.

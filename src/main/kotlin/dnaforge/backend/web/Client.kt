@@ -1,9 +1,9 @@
-package web
+package dnaforge.backend.web
 
 import io.ktor.server.websocket.*
 import io.ktor.websocket.*
 import kotlinx.serialization.encodeToString
-import simpleJson
+import dnaforge.backend.simpleJson
 
 /**
  * This class represents a client connected to this application.

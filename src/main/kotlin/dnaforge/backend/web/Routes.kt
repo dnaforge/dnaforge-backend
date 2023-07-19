@@ -1,4 +1,4 @@
-package web
+package dnaforge.backend.web
 
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
@@ -9,10 +9,13 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.util.pipeline.*
-import sim.Jobs
-import sim.SimJob
-import simpleJson
+import dnaforge.backend.sim.Jobs
+import dnaforge.backend.sim.SimJob
+import dnaforge.backend.simpleJson
 
+/**
+ * Adds some endpoints to the web server.
+ */
 fun Application.configureRoutes() {
     // install plugins
     install(ContentNegotiation) {

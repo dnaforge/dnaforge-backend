@@ -1,10 +1,10 @@
-package sim
+package dnaforge.backend.sim
 
-import Environment
-import endConfFileName
-import forcesFileName
-import inputFileName
-import jobFileName
+import dnaforge.backend.Environment
+import dnaforge.backend.endConfFileName
+import dnaforge.backend.forcesFileName
+import dnaforge.backend.inputFileName
+import dnaforge.backend.jobFileName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -16,12 +16,12 @@ import kotlinx.serialization.Transient
 import kotlinx.serialization.json.decodeFromStream
 import kotlinx.serialization.json.encodeToStream
 import org.slf4j.LoggerFactory
-import oxDnaLogFileName
-import prettyJson
-import startConfFileName
-import stepFileName
-import topologyFileName
-import web.Clients
+import dnaforge.backend.oxDnaLogFileName
+import dnaforge.backend.prettyJson
+import dnaforge.backend.startConfFileName
+import dnaforge.backend.stepFileName
+import dnaforge.backend.topologyFileName
+import dnaforge.backend.web.Clients
 import java.io.BufferedReader
 import java.io.File
 import java.io.IOException
