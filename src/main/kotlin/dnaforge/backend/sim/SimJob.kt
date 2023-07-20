@@ -339,6 +339,10 @@ data class SimJob(
             return file.inputStream().use { prettyJson.decodeFromStream(it) }
         }
     }
+
+    override fun toString(): String {
+        return "SimJob(id=$id, steps=$steps, completedSteps=$completedSteps, status=$status, progress=$progress, error=$error)"
+    }
 }
 
 /**
