@@ -119,17 +119,29 @@ fun Application.configureRoutes() {
                 }
             }
 
-            post("/unsubscribe") {
-                ifAuthorized {
-                    Clients.unsubscribe(it)
-                    ok()
+            route("/subscribe") {
+                get {
+                    ifAuthorized {
+                        val id = Clients.getSubscription(it)
+                        if (id == null)
+                            call.respond(HttpStatusCode.NoContent)
+                        else
+                            call.respond(id)
+                    }
                 }
-            }
 
-            post("/subscribe/{id?}") {
-                ifAuthorized { client ->
-                    withJob {
-                        Clients.subscribe(client, it.id)
+                post("/{id?}") {
+                    ifAuthorized { client ->
+                        withJob {
+                            Clients.subscribe(client, it.id)
+                            ok()
+                        }
+                    }
+                }
+
+                delete {
+                    ifAuthorized {
+                        Clients.unsubscribe(it)
                         ok()
                     }
                 }

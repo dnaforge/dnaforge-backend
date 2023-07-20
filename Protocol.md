@@ -122,13 +122,15 @@ CLIENT -> PATCH/job/<ID>
 
 TODO
 
-## Unsubscribe
+## Get Subscription
 
-If a client doesn't want to receive detailed updates anymore, they can unsubscribe with a POST request.  
-Normal job updates will still be delivered.
+The current subscription can be checked with a GET request.  
+If the client isn't currently subscribed to a job, the server will respond with `204 No Content`.  
+Otherwise, the response will contain the job ID.
 
 ```
-CLIENT -> POST/job/unsubscribe
+CLIENT -> GET/job/subscribe
+SERVER -> UInt
 ```
 
 ### Examples
@@ -142,6 +144,19 @@ Normal job updates will still be delivered.
 
 ```
 CLIENT -> POST/job/subscribe/<ID>
+```
+
+### Examples
+
+TODO
+
+## Unsubscribe
+
+If a client doesn't want to receive detailed updates anymore, they can unsubscribe with a DELETE request.  
+Normal job updates will still be delivered.
+
+```
+CLIENT -> DELETE/job/subscribe
 ```
 
 ### Examples

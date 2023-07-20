@@ -28,6 +28,19 @@ object Clients {
     private val jobIdSubscribedClient = mutableMapOf<UInt, MutableList<Client>>()
 
     /**
+     * Looks up which [SimJob] the given [Client] is currently subscribed to.
+     *
+     * @param client the [client] whose subscription to look up.
+     *
+     * @return the ID of the [SimJob] the [Client] is subscribed to; `null` if the [Client] has no subscription.
+     */
+    suspend fun getSubscription(client: Client): UInt? {
+        return mutex.withLock {
+            clientSubscribedJobId[client]
+        }
+    }
+
+    /**
      * Unsubscribes the specified [Client] from any [SimJob].
      *
      * @param client the [Client] whose subscriptions should be adjusted.
@@ -61,6 +74,7 @@ object Clients {
             jobIdSubscribedClient[jobId]?.add(client) ?: run {
                 jobIdSubscribedClient[jobId] = mutableListOf(client)
             }
+            clientSubscribedJobId[client] = jobId
         }
 
         log.debug("A client has subscribed to the job with ID {}", jobId)

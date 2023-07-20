@@ -7,15 +7,15 @@ import dnaforge.backend.sim.default
 import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.server.testing.*
-import org.junit.jupiter.api.BeforeEach
 import java.io.File
+import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class CancelJobTest {
 
     @OptIn(InternalAPI::class)
-    @BeforeEach
+    @BeforeTest
     fun `prepare app state`() {
         File("./data").deleteRecursively()
         Jobs.resetState()
