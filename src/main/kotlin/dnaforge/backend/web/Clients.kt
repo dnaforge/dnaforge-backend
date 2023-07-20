@@ -23,7 +23,6 @@ object Clients {
     private val random: Random = SecureRandom()
 
     private val tokenClientsMap = mutableMapOf<String, Client>()
-    private val clients = mutableMapOf<WebSocketServerSession, Client>()
     private val clientSubscribedJobId = mutableMapOf<Client, UInt>()
     private val jobIdSubscribedClient = mutableMapOf<UInt, MutableList<Client>>()
 
@@ -109,7 +108,7 @@ object Clients {
             }
 
             // send update to clients
-            clients.values.forEach { it.trySendMessage(JobUpdate(jobId, job)) }
+            tokenClientsMap.values.forEach { it.trySendMessage(JobUpdate(jobId, job)) }
         }
 
         log.debug(
@@ -187,7 +186,6 @@ object Clients {
     suspend fun disconnect(client: Client) {
         mutex.withLock {
             tokenClientsMap.remove(client.bearerToken)
-            clients.remove(client.session)
         }
 
         // remove subscriptions
