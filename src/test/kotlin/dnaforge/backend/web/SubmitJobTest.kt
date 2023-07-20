@@ -39,7 +39,7 @@ class SubmitJobTest {
         client.post("/job") {
             header(HttpHeaders.Authorization, bearerToken)
             contentType(ContentType.Application.Json)
-            setBody(JobNew(default, "a", "b", "c"))
+            setBody(JobNew(default, top, dat, forces))
         }.apply {
             assertEquals(HttpStatusCode.OK, status)
             val job0: SimJob = body()
@@ -53,7 +53,7 @@ class SubmitJobTest {
         client.post("/job") {
             header(HttpHeaders.Authorization, bearerToken)
             contentType(ContentType.Application.Json)
-            setBody(JobNew(default, "d", "e", "f"))
+            setBody(JobNew(default, top, dat, forces))
         }.apply {
             assertEquals(HttpStatusCode.OK, status)
             val job0: SimJob = body()

@@ -13,6 +13,10 @@ import io.ktor.websocket.*
 import kotlinx.serialization.encodeToString
 import kotlin.test.assertEquals
 
+val top = object {}::class.java.classLoader.getResource("tetrahedron.top")!!.readText()
+val dat = object {}::class.java.classLoader.getResource("tetrahedron.dat")!!.readText()
+val forces = object {}::class.java.classLoader.getResource("tetrahedron.forces")!!.readText()
+
 /**
  * Prepares the application and creates a client with the required plugins.
  *

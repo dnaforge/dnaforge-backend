@@ -45,7 +45,7 @@ class DeleteJobTest {
     fun `deleting job works`() = testApplication {
         val (client, bearerToken) = prepareWithAuth()
 
-        Jobs.submitNewJob(default, "a", "b", "c")
+        Jobs.submitNewJob(default, top, dat, forces)
 
         client.delete("/job/0") {
             header(HttpHeaders.Authorization, bearerToken)

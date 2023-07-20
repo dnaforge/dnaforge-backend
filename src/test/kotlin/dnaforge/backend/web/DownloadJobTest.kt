@@ -45,7 +45,7 @@ class DownloadJobTest {
     fun `download works`() = testApplication {
         val (client, bearerToken) = prepareWithAuth()
 
-        Jobs.submitNewJob(default, "a", "b", "c")
+        Jobs.submitNewJob(default, top, dat, forces)
 
         client.get("/job/download/0") {
             header(HttpHeaders.Authorization, bearerToken)

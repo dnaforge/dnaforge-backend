@@ -47,7 +47,7 @@ class GetJobTest {
     fun `getting job works`() = testApplication {
         val (client, bearerToken) = prepareWithAuth()
 
-        val job0 = Jobs.submitNewJob(default, "a", "b", "c")
+        val job0 = Jobs.submitNewJob(default, top, dat, forces)
 
         client.get("/job/0") {
             header(HttpHeaders.Authorization, bearerToken)

@@ -46,7 +46,7 @@ class GetJobDetailsTest {
     fun `getting details works`() = testApplication {
         val (client, bearerToken) = prepareWithAuth()
 
-        val job0 = Jobs.submitNewJob(default, "a", "b", "c")
+        val job0 = Jobs.submitNewJob(default, top, dat, forces)
 
         client.get("/job/details/0") {
             header(HttpHeaders.Authorization, bearerToken)
@@ -54,9 +54,9 @@ class GetJobDetailsTest {
             assertEquals(HttpStatusCode.OK, status)
             val receivedData: CompleteJob = body()
             assertEquals(job0, receivedData.job)
-            assertEquals("a", receivedData.top)
-            assertEquals("b", receivedData.dat)
-            assertEquals("c", receivedData.forces)
+            assertEquals(top, receivedData.top)
+            assertEquals(dat, receivedData.dat)
+            assertEquals(forces, receivedData.forces)
         }
     }
 }

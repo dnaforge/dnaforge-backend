@@ -46,7 +46,7 @@ class CancelJobTest {
     fun `canceling job works`() = testApplication {
         val (client, bearerToken) = prepareWithAuth()
 
-        Jobs.submitNewJob(default, "a", "b", "c")
+        Jobs.submitNewJob(default, top, dat, forces)
 
         client.patch("/job/0") {
             header(HttpHeaders.Authorization, bearerToken)

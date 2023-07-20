@@ -44,7 +44,7 @@ class GetJobsTest {
             assertEquals(0, jobs.size)
         }
 
-        val job0 = Jobs.submitNewJob(default, "a", "b", "c")
+        val job0 = Jobs.submitNewJob(default, top, dat, forces)
 
         client.get("/job") {
             header(HttpHeaders.Authorization, bearerToken)
@@ -55,7 +55,7 @@ class GetJobsTest {
             assertEquals(job0, jobs[0])
         }
 
-        val job1 = Jobs.submitNewJob(default, "d", "e", "f")
+        val job1 = Jobs.submitNewJob(default, top, dat, forces)
 
         client.get("/job") {
             header(HttpHeaders.Authorization, bearerToken)
