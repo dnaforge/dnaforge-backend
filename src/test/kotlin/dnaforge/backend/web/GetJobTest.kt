@@ -2,6 +2,7 @@ package dnaforge.backend.web
 
 import dnaforge.backend.InternalAPI
 import dnaforge.backend.sim.Jobs
+import dnaforge.backend.sim.SimJob
 import dnaforge.backend.sim.default
 import io.ktor.client.call.*
 import io.ktor.client.request.*
@@ -12,7 +13,7 @@ import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-class GetSingleJobDetailsTest {
+class GetJobTest {
 
     @OptIn(InternalAPI::class)
     @BeforeEach
@@ -23,19 +24,19 @@ class GetSingleJobDetailsTest {
     }
 
     @Test
-    fun `getting details doesn't work without auth`() = testApplication {
+    fun `getting job doesn't work without auth`() = testApplication {
         val client = prepare()
 
-        client.get("/job/details/0").apply {
+        client.get("/job/0").apply {
             assertEquals(HttpStatusCode.Unauthorized, status)
         }
     }
 
     @Test
-    fun `getting details doesn't work with wrong id`() = testApplication {
+    fun `getting job doesn't work with wrong id`() = testApplication {
         val (client, bearerToken) = prepareWithAuth()
 
-        client.get("/job/details/0") {
+        client.get("/job/0") {
             header(HttpHeaders.Authorization, bearerToken)
         }.apply {
             assertEquals(HttpStatusCode.NotFound, status)
@@ -43,20 +44,17 @@ class GetSingleJobDetailsTest {
     }
 
     @Test
-    fun `getting details works`() = testApplication {
+    fun `getting job works`() = testApplication {
         val (client, bearerToken) = prepareWithAuth()
 
         val job0 = Jobs.submitNewJob(default, "a", "b", "c")
 
-        client.get("/job/details/0") {
+        client.get("/job/0") {
             header(HttpHeaders.Authorization, bearerToken)
         }.apply {
             assertEquals(HttpStatusCode.OK, status)
-            val receivedData: CompleteJob = body()
-            assertEquals(job0, receivedData.job)
-            assertEquals("a", receivedData.top)
-            assertEquals("b", receivedData.dat)
-            assertEquals("c", receivedData.forces)
+            val receivedJob: SimJob = body()
+            assertEquals(job0, receivedJob)
         }
     }
 }
