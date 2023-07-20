@@ -110,7 +110,7 @@ fun Application.configureRoutes() {
                 }
             }
 
-            patch("/cancel/{id?}") {
+            patch("/{id?}") {
                 ifAuthorized {
                     withJob {
                         Jobs.cancelJob(it.id)
