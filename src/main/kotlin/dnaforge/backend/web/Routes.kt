@@ -96,8 +96,8 @@ fun Application.configureRoutes() {
             post {
                 ifAuthorized {
                     val newJob: JobNew = call.receive()
-                    Jobs.submitNewJob(newJob.configs, newJob.top, newJob.dat, newJob.forces)
-                    call.respond(SimJob)
+                    val job = Jobs.submitNewJob(newJob.configs, newJob.top, newJob.dat, newJob.forces)
+                    call.respond(job)
                 }
             }
 

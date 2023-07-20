@@ -51,7 +51,7 @@ class DownloadJobTest {
             header(HttpHeaders.Authorization, bearerToken)
         }.apply {
             assertEquals(HttpStatusCode.OK, status)
-            assertEquals("application/zip", contentType()?.toString())
+            assertEquals(ContentType.Application.Zip, contentType())
         }
     }
 }
