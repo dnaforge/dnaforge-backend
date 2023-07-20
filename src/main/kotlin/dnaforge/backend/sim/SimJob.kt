@@ -25,12 +25,13 @@ import java.util.zip.ZipOutputStream
 @Serializable
 data class SimJob(
     val id: UInt,
-    val steps: UInt,
-    var completedSteps: UInt = 0u,
-    var status: JobState = JobState.NEW,
-    var progress: Float = 0.0f,
-    var error: String? = null
+    val steps: UInt
 ) {
+    private var completedSteps: UInt = 0u
+    var status: JobState = JobState.NEW
+    private var progress: Float = 0.0f
+    private var error: String? = null
+
     @Transient
     private val mutex = Mutex()
 
