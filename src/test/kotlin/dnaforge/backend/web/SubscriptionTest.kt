@@ -19,6 +19,7 @@ class SubscriptionTest {
     fun `prepare app state`() {
         File("./data").deleteRecursively()
         Jobs.resetState()
+        Jobs.inhibitJobExecution()
     }
 
     @Test
@@ -74,7 +75,7 @@ class SubscriptionTest {
     fun `subscribing job and getting subscription works`() = testApplication {
         val (client, bearerToken) = prepareWithAuth()
 
-        Jobs.submitNewJob(default, "a", "b", "c")
+        Jobs.submitNewJob(default, top, dat, forces)
 
         client.post("/job/subscribe/0") {
             header(HttpHeaders.Authorization, bearerToken)
@@ -95,7 +96,7 @@ class SubscriptionTest {
     fun `unsubscribing job works`() = testApplication {
         val (client, bearerToken) = prepareWithAuth()
 
-        Jobs.submitNewJob(default, "a", "b", "c")
+        Jobs.submitNewJob(default, top, dat, forces)
 
         client.post("/job/subscribe/0") {
             header(HttpHeaders.Authorization, bearerToken)
