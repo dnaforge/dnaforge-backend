@@ -1,23 +1,30 @@
 package dnaforge.backend.web
 
+import dnaforge.backend.sim.Jobs
+import dnaforge.backend.sim.SimJob
+import dnaforge.backend.simpleJson
+import dnaforge.backend.zipFileName
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
+import io.ktor.server.plugins.autohead.*
 import io.ktor.server.plugins.contentnegotiation.*
+import io.ktor.server.plugins.partialcontent.*
 import io.ktor.server.plugins.statuspages.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.util.pipeline.*
-import dnaforge.backend.sim.Jobs
-import dnaforge.backend.sim.SimJob
-import dnaforge.backend.simpleJson
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * Adds some endpoints to the web server.
  */
 fun Application.configureRoutes() {
     // install plugins
+    install(PartialContent)
+    install(AutoHeadResponse)
     install(ContentNegotiation) {
         json(simpleJson)
     }
@@ -48,6 +55,40 @@ fun Application.configureRoutes() {
                 ifAuthorized {
                     withJob {
                         call.respond(it)
+                    }
+                }
+            }
+
+            get("/detail/{id?}") {
+                ifAuthorized {
+                    withJob {
+                        val data = withContext(Dispatchers.IO) {
+                            CompleteJob(
+                                it,
+                                it.topFile.readText(),
+                                it.getLatestConfFile().readText(),
+                                it.forcesFile.readText()
+                            )
+                        }
+                        call.respond(data)
+                    }
+                }
+            }
+
+            get("/download/{id?}") {
+                ifAuthorized {
+                    withJob {
+                        val zip = withContext(Dispatchers.IO) {
+                            it.prepareDownload()
+                        }
+                        call.response.header(
+                            HttpHeaders.ContentDisposition,
+                            ContentDisposition.Attachment.withParameter(
+                                ContentDisposition.Parameters.FileName,
+                                zipFileName
+                            ).toString()
+                        )
+                        call.respondFile(zip)
                     }
                 }
             }

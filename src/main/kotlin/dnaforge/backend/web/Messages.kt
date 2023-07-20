@@ -13,9 +13,17 @@ import dnaforge.backend.sim.StepConfig
 data class JobNew(val configs: List<StepConfig>, val top: String, val dat: String, val forces: String)
 
 /**
+ * Sent by the server.
+ * Sends all available information about the current state of a job.
+ */
+@Serializable
+data class CompleteJob(val job: SimJob, val top: String, val dat: String, val forces: String)
+
+/**
  * [WebSocketMessage] is a sealed interface
- * and must be implemented by all possible messages sent between a client and server.
- * This allows automatic (de)serialization.
+ * and must be implemented by all possible messages
+ * sent between a client and server via a WebSocket.
+ * This allows automatic polymorphic (de)serialization.
  */
 @Serializable
 sealed interface WebSocketMessage

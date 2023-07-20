@@ -22,6 +22,8 @@ const val inputFileName = "input.properties"
 
 const val oxDnaLogFileName = "oxDNA.log"
 
+const val zipFileName = "download.zip"
+
 
 /**
  * [Json] with default and `null` encoding.

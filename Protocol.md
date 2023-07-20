@@ -58,6 +58,33 @@ SERVER -> SimJob
 
 TODO
 
+## Get Job Details
+
+A client can retrieve a single job along with its top dat/conf and forces data by its ID.  
+The dat data is taken from the most recently completed step.
+
+```
+CLIENT -> GET/job/detail/<ID>
+SERVER -> CompleteJob(job: SimJob, top: String, dat: String, forces: String)
+```
+
+### Examples
+
+TODO
+
+## Download Job
+
+A client can retrieve all data stored on the server as a zip file.
+
+```
+CLIENT -> GET/job/download/<ID>
+SERVER -> download.zip
+```
+
+### Examples
+
+TODO
+
 ## New Job
 
 A new job can be submitted using a POST request.

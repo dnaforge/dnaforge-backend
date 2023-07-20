@@ -1,10 +1,7 @@
 package dnaforge.backend.sim
 
-import dnaforge.backend.Environment
-import dnaforge.backend.endConfFileName
-import dnaforge.backend.forcesFileName
-import dnaforge.backend.inputFileName
-import dnaforge.backend.jobFileName
+import dnaforge.backend.*
+import dnaforge.backend.web.Clients
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -16,17 +13,11 @@ import kotlinx.serialization.Transient
 import kotlinx.serialization.json.decodeFromStream
 import kotlinx.serialization.json.encodeToStream
 import org.slf4j.LoggerFactory
-import dnaforge.backend.oxDnaLogFileName
-import dnaforge.backend.prettyJson
-import dnaforge.backend.startConfFileName
-import dnaforge.backend.stepFileName
-import dnaforge.backend.topologyFileName
-import dnaforge.backend.web.Clients
-import java.io.BufferedReader
-import java.io.File
-import java.io.IOException
-import java.io.InputStreamReader
+import java.io.*
 import java.util.concurrent.TimeUnit
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
+
 
 /**
  * This class represents a job.
@@ -72,6 +63,63 @@ data class SimJob(
                 val stepFile = File(stepDir, stepFileName)
                 val stepConfig = StepConfig.fromJsonFile(stepFile)
                 this.add(stepConfig.getParameterMap()["steps"]?.toUIntOrNull() ?: 0u)
+            }
+        }
+    }
+
+    /**
+     * Determines the latest available conf [File].
+     * Only completed steps are considered.
+     *
+     * @return a new [File] instance pointing to the latest known conf [File].
+     */
+    suspend fun getLatestConfFile(): File = mutex.withLock {
+        if (completedSteps == 0u)
+            return startConfFile
+
+        val lastCompletedStepDir = File(dir, (completedSteps - 1u).toString())
+        return File(lastCompletedStepDir, endConfFileName)
+    }
+
+    fun prepareDownload(): File {
+        val zipFile = File(dir, zipFileName)
+        FileOutputStream(zipFile).use { zipFis ->
+            ZipOutputStream(zipFis).use { out ->
+                dir.listFiles { file: File -> file != zipFile }?.forEach { file ->
+                    zipFile(out, file)
+                }
+            }
+        }
+        return zipFile
+    }
+
+    /**
+     * Adds the specified [fileToZip] to the [ZipOutputStream].
+     * If [fileToZip] is a directory, this function is called recursively for all children.
+     *
+     * @param zipOut the [ZipOutputStream] to write to.
+     * @param fileToZip the [File] to add to [zipOut].
+     * @param prefix used for the recursive call.
+     */
+    private fun zipFile(zipOut: ZipOutputStream, fileToZip: File, prefix: String = "") {
+        if (fileToZip.isDirectory) {
+            zipOut.putNextEntry(ZipEntry("$prefix${file.name}/"))
+            zipOut.closeEntry()
+
+            fileToZip.listFiles()?.forEach { childFile ->
+                zipFile(zipOut, childFile, "$prefix${file.name}{File.separatorChar}")
+            }
+        } else {
+            FileInputStream(fileToZip).use { fis ->
+                val entry = ZipEntry(prefix)
+                zipOut.putNextEntry(entry)
+
+                val bytes = ByteArray(1024)
+                var length: Int
+                while (fis.read(bytes).also { length = it } >= 0) {
+                    zipOut.write(bytes, 0, length)
+                }
+                zipOut.closeEntry()
             }
         }
     }
