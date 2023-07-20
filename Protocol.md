@@ -64,7 +64,7 @@ A client can retrieve a single job along with its top dat/conf and forces data b
 The dat data is taken from the most recently completed step.
 
 ```
-CLIENT -> GET/job/detail/<ID>
+CLIENT -> GET/job/details/<ID>
 SERVER -> CompleteJob(job: SimJob, top: String, dat: String, forces: String)
 ```
 

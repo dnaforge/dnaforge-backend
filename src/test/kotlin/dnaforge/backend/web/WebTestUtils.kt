@@ -1,5 +1,6 @@
 package dnaforge.backend.web
 
+import dnaforge.backend.simpleJson
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.plugins.contentnegotiation.*
@@ -10,7 +11,6 @@ import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.testing.*
 import io.ktor.websocket.*
 import kotlinx.serialization.encodeToString
-import dnaforge.backend.simpleJson
 import kotlin.test.assertEquals
 
 /**

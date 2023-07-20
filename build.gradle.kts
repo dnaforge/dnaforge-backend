@@ -48,7 +48,7 @@ kotlin {
 }
 
 application {
-    mainClass.set("MainKt")
+    mainClass.set("dnaforge.backend.MainKt")
 }
 
 idea {

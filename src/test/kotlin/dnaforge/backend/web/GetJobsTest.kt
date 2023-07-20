@@ -1,14 +1,14 @@
 package dnaforge.backend.web
 
 import dnaforge.backend.InternalAPI
+import dnaforge.backend.sim.Jobs
+import dnaforge.backend.sim.SimJob
+import dnaforge.backend.sim.default
 import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.server.testing.*
 import org.junit.jupiter.api.BeforeEach
-import dnaforge.backend.sim.Jobs
-import dnaforge.backend.sim.SimJob
-import dnaforge.backend.sim.default
 import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -17,8 +17,9 @@ class GetJobsTest {
 
     @OptIn(InternalAPI::class)
     @BeforeEach
-    fun `delete data directory`() {
+    fun `prepare app state`() {
         File("./data").deleteRecursively()
+        Jobs.resetState()
         Jobs.inhibitJobExecution()
     }
 
@@ -32,7 +33,7 @@ class GetJobsTest {
     }
 
     @Test
-    fun `getting jobs works with auth`() = testApplication {
+    fun `getting jobs works`() = testApplication {
         val (client, bearerToken) = prepareWithAuth()
 
         client.get("/job") {

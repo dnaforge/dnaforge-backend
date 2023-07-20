@@ -199,14 +199,16 @@ object Jobs {
     @InternalAPI
     internal fun resetState() {
         runBlocking {
-            nextId = 0u
-            finishedJobs.clear()
-            queuedJobs.clear()
-            while (!queue.isEmpty)
-                queue.receive()
+            mutex.withLock {
+                nextId = 0u
+                finishedJobs.clear()
+                queuedJobs.clear()
+                while (!queue.isEmpty)
+                    queue.receive()
 
-            // in case inhibitJobExecution was called
-            scope = CoroutineScope(newSingleThreadContext("JobExecutionContext"))
+                // in case inhibitJobExecution was called
+                scope = CoroutineScope(newSingleThreadContext("JobExecutionContext"))
+            }
         }
     }
 }

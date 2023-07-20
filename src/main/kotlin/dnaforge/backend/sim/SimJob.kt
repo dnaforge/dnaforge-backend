@@ -103,15 +103,15 @@ data class SimJob(
      */
     private fun zipFile(zipOut: ZipOutputStream, fileToZip: File, prefix: String = "") {
         if (fileToZip.isDirectory) {
-            zipOut.putNextEntry(ZipEntry("$prefix${file.name}/"))
+            zipOut.putNextEntry(ZipEntry("$prefix${fileToZip.name}/"))
             zipOut.closeEntry()
 
             fileToZip.listFiles()?.forEach { childFile ->
-                zipFile(zipOut, childFile, "$prefix${file.name}{File.separatorChar}")
+                zipFile(zipOut, childFile, "$prefix${fileToZip.name}${File.separatorChar}")
             }
         } else {
             FileInputStream(fileToZip).use { fis ->
-                val entry = ZipEntry(prefix)
+                val entry = ZipEntry("$prefix${fileToZip.name}")
                 zipOut.putNextEntry(entry)
 
                 val bytes = ByteArray(1024)

@@ -59,7 +59,7 @@ fun Application.configureRoutes() {
                 }
             }
 
-            get("/detail/{id?}") {
+            get("/details/{id?}") {
                 ifAuthorized {
                     withJob {
                         val data = withContext(Dispatchers.IO) {

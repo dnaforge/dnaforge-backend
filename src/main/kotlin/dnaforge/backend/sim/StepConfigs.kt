@@ -1,17 +1,11 @@
 package dnaforge.backend.sim
 
-import dnaforge.backend.endConfFileName
-import dnaforge.backend.energyFileName
-import dnaforge.backend.forcesFileName
+import dnaforge.backend.*
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.decodeFromStream
 import kotlinx.serialization.json.encodeToStream
-import dnaforge.backend.prettyJson
-import dnaforge.backend.startConfFileName
-import dnaforge.backend.topologyFileName
-import dnaforge.backend.trajectoryFileName
 import java.io.File
 
 /**
