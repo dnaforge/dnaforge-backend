@@ -29,6 +29,7 @@ data class SimJob(
 ) {
     private var completedSteps: UInt = 0u
     var status: JobState = JobState.NEW
+        private set
     private var progress: Float = 0.0f
     private var error: String? = null
 
