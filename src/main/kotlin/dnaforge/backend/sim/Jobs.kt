@@ -18,7 +18,6 @@ import java.io.File
 object Jobs {
     private val log = LoggerFactory.getLogger(Jobs::class.java)
     private val mutex = Mutex()
-    private var scope = CoroutineScope(newSingleThreadContext("JobExecutionContext"))
 
     private var nextId: UInt
 
@@ -54,12 +53,17 @@ object Jobs {
 
         log.debug("Finished jobs:\n     ${finishedJobs.values.joinToString("\n     ")}")
         log.debug("Queued jobs:\n     ${queuedJobs.values.joinToString("\n     ")}")
+    }
 
+    /**
+     * Starts a new thread. This thread will then automatically execute the submitted jobs one at a time.
+     */
+    suspend fun enableAutomaticJobExecution() {
+        val scope = CoroutineScope(newSingleThreadContext("JobExecutionContext"))
         val coroutineJob = scope.launch {
             for (job in queue) {
                 // check if the job is actually still queued or not
                 if (!mutex.withLock { queuedJobs.containsKey(job.id) }) continue
-
 
                 job.execute()
 
@@ -183,13 +187,6 @@ object Jobs {
         }
     }
 
-    /**
-     * Cancels the [CoroutineScope] used to execute [SimJob]s.
-     * Useful to prevent execution during testing.
-     */
-    @InternalAPI
-    internal fun inhibitJobExecution() = scope.cancel()
-
 
     /**
      * Resets the state of this object.
@@ -205,9 +202,6 @@ object Jobs {
                 queuedJobs.clear()
                 while (!queue.isEmpty)
                     queue.receive()
-
-                // in case inhibitJobExecution was called
-                scope = CoroutineScope(newSingleThreadContext("JobExecutionContext"))
             }
         }
     }

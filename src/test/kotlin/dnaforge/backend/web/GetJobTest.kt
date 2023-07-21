@@ -20,7 +20,6 @@ class GetJobTest {
     fun `prepare app state`() {
         File("./data").deleteRecursively()
         Jobs.resetState()
-        Jobs.inhibitJobExecution()
     }
 
     @Test
