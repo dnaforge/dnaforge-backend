@@ -17,6 +17,7 @@ import io.ktor.server.routing.*
 import io.ktor.util.pipeline.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.time.Instant
 
 /**
  * Adds some endpoints to the web server.
@@ -175,8 +176,10 @@ private suspend inline fun PipelineContext<Unit, ApplicationCall>.ifAuthorized(b
     val client = Clients.getClientByBearerToken(call.request.authorization())
     if (client == null)
         call.respond(HttpStatusCode.Unauthorized)
-    else
+    else {
+        client.lastInteraction = Instant.now()
         body(this, client)
+    }
 }
 
 /**

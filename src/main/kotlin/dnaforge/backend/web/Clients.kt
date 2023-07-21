@@ -4,18 +4,23 @@ import dnaforge.backend.Environment
 import dnaforge.backend.sim.Jobs
 import dnaforge.backend.sim.SimJob
 import io.ktor.server.websocket.*
+import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.slf4j.LoggerFactory
 import java.security.SecureRandom
+import java.time.Instant
+import java.time.temporal.ChronoUnit
 import java.util.*
 import kotlin.streams.asSequence
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 
-// TODO: periodically check for dangling clients that authenticated but then didn't get a WebSocket session
 /**
  * This object manages clients connected to this application.
  * It is responsible for distributing updates.
  */
+@OptIn(DelicateCoroutinesApi::class)
 object Clients {
     private val log = LoggerFactory.getLogger(Jobs::class.java)
     private val mutex = Mutex()
@@ -25,6 +30,37 @@ object Clients {
     private val tokenClientsMap = mutableMapOf<String, Client>()
     private val clientSubscribedJobId = mutableMapOf<Client, UInt>()
     private val jobIdSubscribedClient = mutableMapOf<UInt, MutableList<Client>>()
+
+    init {
+        val scope = CoroutineScope(newSingleThreadContext("JobExecutionContext"))
+        val coroutineJob = scope.launch {
+            // run cleanup once every minute
+            while (true) {
+                delay(1.toDuration(DurationUnit.MINUTES))
+
+                val inactiveClients: Map<String, Client>
+                mutex.withLock {
+                    // Purge clients that do not have an active WebSocket session
+                    // and have not interacted in the last 5 minutes.
+                    inactiveClients = tokenClientsMap.filterValues {
+                        it.session == null && it.lastInteraction.isBefore(
+                            Instant.now().minus(5, ChronoUnit.MINUTES)
+                        )
+                    }
+                    inactiveClients.forEach {
+                        tokenClientsMap.remove(it.key)
+                    }
+                }
+                // remove subscriptions
+                inactiveClients.forEach {
+                    unsubscribe(it.value)
+                }
+
+                log.info("Purged {} inactive clients.", inactiveClients.size)
+            }
+        }
+        coroutineJob.start()
+    }
 
     /**
      * Looks up which [SimJob] the given [Client] is currently subscribed to.
