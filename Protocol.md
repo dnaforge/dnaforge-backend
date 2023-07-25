@@ -32,6 +32,32 @@ See [Job Update](#job-update) and [Detailed Job Update](#detailed-job-update) fo
 
 TODO
 
+## Get Options Available for Manual Step Configuration
+
+The server provides the available options for manual configuration.
+
+```
+CLIENT -> GET/options/available
+Server -> Option
+```
+
+### Examples
+
+TODO
+
+## Get Default Step Configurations
+
+The server also provides some default steps that represent a good starting point for relaxation and simulation.
+
+```
+CLIENT -> GET/options/default
+SERVER -> List<StepConfig>
+```
+
+### Examples
+
+TODO
+
 ## Get Job list
 
 A client can get the list of all jobs via a simple GET request.

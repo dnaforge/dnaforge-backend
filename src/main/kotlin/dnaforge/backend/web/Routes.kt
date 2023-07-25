@@ -1,7 +1,9 @@
 package dnaforge.backend.web
 
 import dnaforge.backend.sim.Jobs
+import dnaforge.backend.sim.ManualStepOptions
 import dnaforge.backend.sim.SimJob
+import dnaforge.backend.sim.default
 import dnaforge.backend.simpleJson
 import dnaforge.backend.zipFileName
 import io.ktor.http.*
@@ -44,6 +46,20 @@ fun Application.configureRoutes() {
                 call.respond(bearerToken)
         }
 
+
+        route("/options") {
+            get("/available") {
+                ifAuthorized {
+                    call.respond(ManualStepOptions.availableOptions)
+                }
+            }
+
+            get("/default") {
+                ifAuthorized {
+                    call.respond(default)
+                }
+            }
+        }
 
         route("/job") {
             get {
