@@ -17,7 +17,7 @@ object ManualStepOptions {
     /**
      * Default relaxation configuration using the _min_ simulation type.
      */
-    private val min: SelectedOption = SelectedOption(
+    val min: SelectedOption = SelectedOption(
         "Manual Config", listOf(
             SelectedProperty("Steps", "2000"),
             SelectedProperty("ΔT", "0.005"),
@@ -39,7 +39,7 @@ object ManualStepOptions {
     /**
      * Default relaxation configuration using simulation type _MC_ and _DNA_relax_ interaction.
      */
-    private val mcRelax: SelectedOption = SelectedOption(
+    val mcRelax: SelectedOption = SelectedOption(
         "Manual Config", listOf(
             SelectedProperty("Steps", "100"),
             SelectedProperty("ΔT", "0.00001"),
@@ -100,7 +100,7 @@ object ManualStepOptions {
     /**
      * Default relaxation configuration using simulation type _MD_ and _DNA_relax_ interaction.
      */
-    private val mdRelax: SelectedOption = SelectedOption(
+    val mdRelax: SelectedOption = SelectedOption(
         "Manual Config", listOf(
             SelectedProperty("Steps", 1e3.toUInt().toString()),
             SelectedProperty("ΔT", "0.005"),
@@ -153,7 +153,7 @@ object ManualStepOptions {
     /**
      * Default simulation configuration using simulation type _MD_ and _DNA_ interaction.
      */
-    private val mdSim: SelectedOption = SelectedOption(
+    val mdSim: SelectedOption = SelectedOption(
         "Manual Config", listOf(
             SelectedProperty("Steps", 1e6.toUInt().toString()),
             SelectedProperty("ΔT", "0.005"),
@@ -194,11 +194,6 @@ object ManualStepOptions {
             )
         )
     )
-
-    /**
-     * Default step config list.
-     */
-    val default = listOf(min, mcRelax, mdRelax, mdSim)
 
 
     /*

@@ -6,8 +6,9 @@ import kotlin.test.assertIs
 class ManualStepOptionsTest {
     @Test
     fun `all default options are valid`() {
-        ManualStepOptions.default.forEach {
-            assertIs<Map<String, String>>(it.encodeToMap())
+        default.forEach {
+            assertIs<ManualConfig>(it)
+            assertIs<Map<String, String>>(it.options.encodeToMap())
         }
     }
 }
