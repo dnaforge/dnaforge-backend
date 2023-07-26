@@ -47,10 +47,14 @@ object Clients {
                             Instant.now().minus(5, ChronoUnit.MINUTES)
                         )
                     }
+
                     inactiveClients.forEach {
                         tokenClientsMap.remove(it.key)
                     }
                 }
+
+                if (inactiveClients.isEmpty()) continue
+
                 // remove subscriptions
                 inactiveClients.forEach {
                     unsubscribe(it.value)
