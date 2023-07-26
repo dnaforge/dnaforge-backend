@@ -75,7 +75,7 @@ data class SimJob(
      *
      * @return a new [File] instance pointing to the latest known conf [File].
      */
-    suspend fun getLatestConfFile(): File = mutex.withLock {
+    fun getLatestConfFile(): File {
         if (completedSteps == 0u)
             return startConfFile
 
