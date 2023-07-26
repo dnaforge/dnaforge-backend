@@ -14,7 +14,7 @@ import java.io.File
  *
  * _ACCESSTOKEN_ can be used to enable simple password protection.
  *
- * _PORT_ may be used to specify a port number. If empty or not an [Int], 80 is used.
+ * _PORT_ may be used to specify a port number. If empty or not an [Int], 8080 is used.
  *
  * _HOST_ may be used to specify a host. If empty, "0.0.0.0" is used.
  */
@@ -54,7 +54,7 @@ object Environment {
         var accessToken: String? = System.getenv("ACCESSTOKEN")?.trim()
         if (accessToken?.isBlank() == true) accessToken = null
 
-        val port: Int = System.getenv("PORT")?.toIntOrNull() ?: 80
+        val port: Int = System.getenv("PORT")?.toIntOrNull() ?: 8080
         val host: String = System.getenv("HOST") ?: "0.0.0.0"
 
         // DATADIR mustn't be null

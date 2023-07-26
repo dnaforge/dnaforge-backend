@@ -12,7 +12,7 @@ services:
       DATADIR: /data/
 
       # Port number used in the container
-      # If left blank, 80 will be used.
+      # If left blank, 8080 will be used.
       PORT: 8080
 
       # Host IP address
