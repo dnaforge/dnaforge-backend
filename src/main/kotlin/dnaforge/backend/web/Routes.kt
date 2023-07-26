@@ -9,6 +9,7 @@ import dnaforge.backend.zipFileName
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
+import io.ktor.server.plugins.cors.*
 import io.ktor.server.plugins.autohead.*
 import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.plugins.partialcontent.*
@@ -35,6 +36,13 @@ fun Application.configureRoutes() {
         exception<Throwable> { call, cause ->
             call.respondText(text = "500: $cause", status = HttpStatusCode.InternalServerError)
         }
+    }
+    install(CORS) {
+        allowHost("127.0.0.1:8080", schemes = listOf("http", "https"))
+        allowHost("localhost:8080", schemes = listOf("http", "https"))
+        allowHost("dnaforge.org", schemes = listOf("http", "https"))
+        allowHeader(HttpHeaders.ContentType)
+        allowHeader(HttpHeaders.Authorization)
     }
 
     routing {
