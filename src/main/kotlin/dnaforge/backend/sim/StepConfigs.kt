@@ -12,10 +12,10 @@ import java.io.File
  * Default step list.
  */
 val default: List<StepConfig> = listOf(
-    ManualConfig(ManualStepOptions.min),
-    ManualConfig(ManualStepOptions.mcRelax),
-    ManualConfig(ManualStepOptions.mdRelax),
-    ManualConfig(ManualStepOptions.mdSim)
+    ManualConfig(true, ManualStepOptions.min),
+    ManualConfig(true, ManualStepOptions.mcRelax),
+    ManualConfig(true, ManualStepOptions.mdRelax),
+    ManualConfig(false, ManualStepOptions.mdSim)
 )
 
 
@@ -24,6 +24,7 @@ val default: List<StepConfig> = listOf(
  */
 @Serializable
 sealed class StepConfig {
+    abstract val autoExtendStep: Boolean
 
     /**
      * Writes this [StepConfig] to the specified JSON [File].
@@ -88,7 +89,7 @@ sealed class StepConfig {
  */
 @Serializable
 @SerialName("FileConfig")
-data class FileConfig(val content: String) : StepConfig() {
+data class FileConfig(override val autoExtendStep: Boolean, val content: String) : StepConfig() {
 
     override fun encodeToMap(): Map<String, String> = buildMap {
         content.lineSequence()
@@ -111,9 +112,7 @@ data class FileConfig(val content: String) : StepConfig() {
  */
 @Serializable
 @SerialName("ManualConfig")
-data class ManualConfig(
-    val options: SelectedOption
-) : StepConfig() {
+data class ManualConfig(override val autoExtendStep: Boolean, val options: SelectedOption) : StepConfig() {
 
     override fun encodeToMap(): Map<String, String> = options.encodeToMap()
 }
