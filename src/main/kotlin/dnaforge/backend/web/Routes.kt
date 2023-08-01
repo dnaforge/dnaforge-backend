@@ -121,6 +121,10 @@ fun Application.configureRoutes() {
             post {
                 ifAuthorized {
                     val newJob: JobNew = call.receive()
+
+                    // check that all configs are valid
+                    newJob.configs.forEach { it.getParameterMap() }
+
                     val job = Jobs.submitNewJob(newJob.configs, newJob.top, newJob.dat, newJob.forces)
                     call.respond(job)
                 }

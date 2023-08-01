@@ -187,19 +187,25 @@ data class SimJob(
         val nextLogFile = File(nextDir, oxDnaLogFileName)
         val endConfFile = File(nextDir, endConfFileName)
 
-        val success = runSimulation(stageConfig.autoExtendStage, nextDir, nextLogFile, endConfFile)
+        // catch any exception that might occur
+        val success = try {
+            runSimulation(stageConfig.autoExtendStage, nextDir, nextLogFile, endConfFile)
+        } catch (e: Throwable) {
+            log.logError(e)
+            error = error ?: e.message ?: "Exception of type \"${e::class.qualifiedName}\""
+            false
+        }
 
         if (success) {
             completedStages++
         } else {
-            error = nextLogFile.useLines {
+            error = error ?: nextLogFile.useLines {
                 it.firstOrNull { line -> line.startsWith("ERROR:") }?.substring("ERROR: ".length)
-            }
+            } ?: "An unknown error occurred."
 
             // abort next stages
             cancelMutex.withLock {
-                if (status != JobState.CANCELED)
-                    status = JobState.CANCELED
+                status = JobState.CANCELED
             }
         }
 

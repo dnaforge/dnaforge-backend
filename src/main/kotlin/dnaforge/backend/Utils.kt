@@ -60,6 +60,16 @@ fun Logger.error(exception: Throwable): Nothing {
     throw exception
 }
 
+
+/**
+ * Logs the given [Throwable] at _ERROR_ level.
+ *
+ * @param exception the [Throwable] to be processed.
+ */
+fun Logger.logError(exception: Throwable) {
+    error(exception.message ?: "Exception of type \"${exception::class.qualifiedName}\"", exception)
+}
+
 /**
  * Indicates an internal API that should not be used without knowing exactly what it does.
  * Typically used to provide functions needed for some tests.
