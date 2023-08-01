@@ -51,23 +51,22 @@ val prettyJson = Json {
 
 
 /**
- * Logs the given [Throwable] at _ERROR_ level and then throws it.
- *
- * @param exception the [Throwable] to be processed.
- */
-fun Logger.error(exception: Throwable): Nothing {
-    error(exception.message ?: "Exception of type \"${exception::class.qualifiedName}\"", exception)
-    throw exception
-}
-
-
-/**
  * Logs the given [Throwable] at _ERROR_ level.
  *
  * @param exception the [Throwable] to be processed.
  */
-fun Logger.logError(exception: Throwable) {
+fun Logger.error(exception: Throwable) {
     error(exception.message ?: "Exception of type \"${exception::class.qualifiedName}\"", exception)
+}
+
+/**
+ * Logs the given [Throwable] at _ERROR_ level and then throws it.
+ *
+ * @param exception the [Throwable] to be processed.
+ */
+fun Logger.throwError(exception: Throwable): Nothing {
+    error(exception.message ?: "Exception of type \"${exception::class.qualifiedName}\"", exception)
+    throw exception
 }
 
 /**

@@ -39,7 +39,7 @@ class UtilsTest {
         val log = LoggerFactory.getLogger("TestLogger")
 
         assertFails {
-            log.error(Throwable("Oh no, an error occurred!"))
+            log.throwError(Throwable("Oh no, an error occurred!"))
         }
     }
 }

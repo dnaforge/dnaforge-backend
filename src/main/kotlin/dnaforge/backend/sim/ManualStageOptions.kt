@@ -1,6 +1,6 @@
 package dnaforge.backend.sim
 
-import dnaforge.backend.error
+import dnaforge.backend.throwError
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import org.slf4j.Logger
@@ -465,11 +465,11 @@ data class SelectedOption(override val name: String, val entries: List<SelectedE
 
     override fun encodeToMap(level: Entry): Map<String, String> = buildMap {
         if (level !is Option)
-            ManualStageOptions.log.error(IllegalArgumentException("Expected something that isn't an Option named ${level.name}."))
+            ManualStageOptions.log.throwError(IllegalArgumentException("Expected something that isn't an Option named ${level.name}."))
         if (name != level.name)
-            ManualStageOptions.log.error(IllegalArgumentException("Expected Option named ${level.name}."))
+            ManualStageOptions.log.throwError(IllegalArgumentException("Expected Option named ${level.name}."))
         if (this@SelectedOption.entries.mapTo(HashSet()) { it.name } != level.entries.mapTo(HashSet()) { it.name })
-            ManualStageOptions.log.error(IllegalArgumentException("Invalid or missing Entries in Option ${level.name}."))
+            ManualStageOptions.log.throwError(IllegalArgumentException("Invalid or missing Entries in Option ${level.name}."))
 
         putAll(level.fixedProperties)
         val backend = mutableSetOf<String?>()
@@ -477,7 +477,7 @@ data class SelectedOption(override val name: String, val entries: List<SelectedE
 
         this@SelectedOption.entries.forEach { entry ->
             val correspondingEntry = level.entries.firstOrNull { it.name == entry.name }
-                ?: ManualStageOptions.log.error(IllegalArgumentException("Entry named ${entry.name} not found."))
+                ?: ManualStageOptions.log.throwError(IllegalArgumentException("Entry named ${entry.name} not found."))
 
             val properties = entry.encodeToMap(correspondingEntry)
             putAll(properties)
@@ -503,12 +503,12 @@ data class SelectedPropertyContainer(
     override fun encodeToMap(level: Entry): Map<String, String> = buildMap {
         // this should be a Property and not a Container
         if (level !is PropertyContainer)
-            ManualStageOptions.log.error(IllegalArgumentException("Expected Property named ${level.name}."))
+            ManualStageOptions.log.throwError(IllegalArgumentException("Expected Property named ${level.name}."))
         if (name != level.name)
-            ManualStageOptions.log.error(IllegalArgumentException("Expected Container named ${level.name}."))
+            ManualStageOptions.log.throwError(IllegalArgumentException("Expected Container named ${level.name}."))
 
         val correspondingOption = level.values.firstOrNull { it.name == value.name }
-            ?: ManualStageOptions.log.error(IllegalArgumentException("Option named ${value.name} not found."))
+            ?: ManualStageOptions.log.throwError(IllegalArgumentException("Option named ${value.name} not found."))
 
         val properties = value.encodeToMap(correspondingOption)
         putAll(properties)
@@ -528,25 +528,25 @@ data class SelectedProperty(
     override fun encodeToMap(level: Entry): Map<String, String> = buildMap {
         // this should be a Container and not a Property
         if (level !is Property)
-            ManualStageOptions.log.error(IllegalArgumentException("Expected Container named ${level.name}."))
+            ManualStageOptions.log.throwError(IllegalArgumentException("Expected Container named ${level.name}."))
         if (name != level.name)
-            ManualStageOptions.log.error(IllegalArgumentException("Expected Property named ${level.name}."))
+            ManualStageOptions.log.throwError(IllegalArgumentException("Expected Property named ${level.name}."))
 
         // validate data type
         val valueWithSuffix = when (level.valueType) {
             ValueType.BOOLEAN -> {
                 value.toBooleanStrictOrNull()?.toString()
-                    ?: ManualStageOptions.log.error(IllegalArgumentException("Expected boolean as value. Got $value."))
+                    ?: ManualStageOptions.log.throwError(IllegalArgumentException("Expected boolean as value. Got $value."))
             }
 
             ValueType.UNSIGNED_INTEGER -> {
                 value.toUIntOrNull()?.toString()
-                    ?: ManualStageOptions.log.error(IllegalArgumentException("Expected unsigned integer as value. Got $value."))
+                    ?: ManualStageOptions.log.throwError(IllegalArgumentException("Expected unsigned integer as value. Got $value."))
             }
 
             ValueType.FLOAT -> {
                 value.toFloatOrNull()?.toString()
-                    ?: ManualStageOptions.log.error(IllegalArgumentException("Expected float as value. Got $value."))
+                    ?: ManualStageOptions.log.throwError(IllegalArgumentException("Expected float as value. Got $value."))
             }
         } + level.suffix
 

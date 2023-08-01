@@ -14,5 +14,5 @@ suspend fun main(): Unit = try {
     startWebServer()
 } catch (e: Throwable) {
     // make sure that all unexpected exceptions are logged (except for exceptions in the logger).
-    log.error(e)
+    log.throwError(e)
 }

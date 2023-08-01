@@ -59,7 +59,7 @@ object Environment {
 
         // DATADIR mustn't be null
         if (dataPath == null)
-            log.error(IllegalArgumentException("Missing data directory. Set environment variable \"DATADIR\""))
+            log.throwError(IllegalArgumentException("Missing data directory. Set environment variable \"DATADIR\""))
 
         Environment.accessToken = accessToken
         dataDir = File(dataPath)
@@ -73,7 +73,7 @@ object Environment {
         // create data dir if needed and check that it actually exists
         dataDir.mkdirs()
         if (!dataDir.isDirectory)
-            log.error(
+            log.throwError(
                 FileSystemException(
                     dataDir,
                     null,

@@ -191,7 +191,7 @@ data class SimJob(
         val success = try {
             runSimulation(stageConfig.autoExtendStage, nextDir, nextLogFile, endConfFile)
         } catch (e: Throwable) {
-            log.logError(e)
+            log.error(e)
             error = error ?: e.message ?: "Exception of type \"${e::class.qualifiedName}\""
             false
         }
