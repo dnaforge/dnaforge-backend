@@ -12,10 +12,30 @@ import java.io.File
  * Default stage list.
  */
 val default: List<StageConfig> = listOf(
-    ManualConfig(true, ManualStageOptions.min),
-    ManualConfig(true, ManualStageOptions.mcRelax),
-    ManualConfig(true, ManualStageOptions.mdRelax),
-    ManualConfig(false, ManualStageOptions.mdSim)
+    ManualConfig(
+        "First Relaxation Stage",
+        "Relaxes the structure using a type of potential energy minimization.",
+        true,
+        ManualStageOptions.min
+    ),
+    ManualConfig(
+        "Second Relaxation Stage",
+        "Relaxes the structure with a short Monte Carlo simulation.",
+        true,
+        ManualStageOptions.mcRelax
+    ),
+    ManualConfig(
+        "Third Relaxation Stage",
+        "Relaxes the structure with a short molecular dynamics simulation with a very small ΔT.",
+        true,
+        ManualStageOptions.mdRelax
+    ),
+    ManualConfig(
+        "Simulation Stage",
+        "Simulates the relaxed structure with a molecular dynamics simulation.",
+        false,
+        ManualStageOptions.mdSim
+    )
 )
 
 
@@ -24,6 +44,8 @@ val default: List<StageConfig> = listOf(
  */
 @Serializable
 sealed class StageConfig {
+    abstract val title: String
+    abstract val description: String
     abstract val autoExtendStage: Boolean
 
     /**
@@ -106,7 +128,12 @@ sealed class StageConfig {
  */
 @Serializable
 @SerialName("FileConfig")
-data class FileConfig(override val autoExtendStage: Boolean, val content: String) : StageConfig() {
+data class FileConfig(
+    override val title: String,
+    override val description: String,
+    override val autoExtendStage: Boolean,
+    val content: String
+) : StageConfig() {
 
     override fun encodeToMap(): Map<String, String> = buildMap {
         content.lineSequence()
@@ -129,7 +156,12 @@ data class FileConfig(override val autoExtendStage: Boolean, val content: String
  */
 @Serializable
 @SerialName("ManualConfig")
-data class ManualConfig(override val autoExtendStage: Boolean, val options: SelectedOption) : StageConfig() {
+data class ManualConfig(
+    override val title: String,
+    override val description: String,
+    override val autoExtendStage: Boolean,
+    val options: SelectedOption
+) : StageConfig() {
 
     override fun encodeToMap(): Map<String, String> = options.encodeToMap()
 }
