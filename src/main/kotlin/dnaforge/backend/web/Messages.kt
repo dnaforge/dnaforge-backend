@@ -3,14 +3,14 @@ package dnaforge.backend.web
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import dnaforge.backend.sim.SimJob
-import dnaforge.backend.sim.StepConfig
+import dnaforge.backend.sim.StageConfig
 
 /**
  * Sent by a client.
- * Sends the list of [StepConfig]s along the structure files.
+ * Sends the list of [StageConfig]s along the structure files.
  */
 @Serializable
-data class JobNew(val configs: List<StepConfig>, val top: String, val dat: String, val forces: String)
+data class JobNew(val configs: List<StageConfig>, val top: String, val dat: String, val forces: String)
 
 /**
  * Sent by the server.

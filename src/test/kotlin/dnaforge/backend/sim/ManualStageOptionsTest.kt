@@ -3,7 +3,7 @@ package dnaforge.backend.sim
 import kotlin.test.Test
 import kotlin.test.assertIs
 
-class ManualStepOptionsTest {
+class ManualStageOptionsTest {
     @Test
     fun `all default options are valid`() {
         default.forEach {

@@ -27,9 +27,9 @@ import kotlin.math.absoluteValue
 @Serializable
 data class SimJob(
     val id: UInt,
-    val steps: UInt
+    val stages: UInt
 ) {
-    private var completedSteps: UInt = 0u
+    private var completedStages: UInt = 0u
     var status: JobState = JobState.NEW
         private set
     private var progress: Float = 0.0f
@@ -63,27 +63,27 @@ data class SimJob(
 
     private val simSteps: List<UInt> by lazy {
         buildList {
-            for (i in 0u..<steps) {
-                val stepDir = File(dir, i.toString())
-                val stepFile = File(stepDir, stepFileName)
-                val stepConfig = StepConfig.fromJsonFile(stepFile)
-                this.add(stepConfig.getParameterMap()["steps"]?.toUIntOrNull() ?: 0u)
+            for (i in 0u..<stages) {
+                val stageDir = File(dir, i.toString())
+                val stageFile = File(stageDir, stageFileName)
+                val stageConfig = StageConfig.fromJsonFile(stageFile)
+                this.add(stageConfig.getParameterMap()["steps"]?.toUIntOrNull() ?: 0u)
             }
         }
     }
 
     /**
      * Determines the latest available conf [File].
-     * Only completed steps are considered.
+     * Only completed stages are considered.
      *
      * @return a new [File] instance pointing to the latest known conf [File].
      */
     fun getLatestConfFile(): File {
-        if (completedSteps == 0u)
+        if (completedStages == 0u)
             return startConfFile
 
-        val lastCompletedStepDir = File(dir, (completedSteps - 1u).toString())
-        return File(lastCompletedStepDir, endConfFileName)
+        val lastCompletedStageDir = File(dir, (completedStages - 1u).toString())
+        return File(lastCompletedStageDir, endConfFileName)
     }
 
     fun prepareDownload(): File {
@@ -148,11 +148,11 @@ data class SimJob(
         unlockedToDisk()
         Clients.propagateUpdate(this.id, this)
 
-        while (completedSteps < steps) {
+        while (completedStages < stages) {
             // stop execution if there was an error or the job was canceled
             if (cancelMutex.withLock { shouldStopExecution() }) break
 
-            executeNextStep()
+            executeNextStage()
             unlockedToDisk()
             Clients.propagateUpdate(this.id, this)
         }
@@ -175,35 +175,35 @@ data class SimJob(
     private fun shouldStopExecution(): Boolean = status == JobState.CANCELED || status == JobState.DONE || error != null
 
     /**
-     * Executes the next step of this [SimJob].
+     * Executes the next stage of this [SimJob].
      */
-    private suspend fun executeNextStep() {
-        log.debug("Running step $completedSteps of the job with ID $id.")
+    private suspend fun executeNextStage() {
+        log.debug("Running stage $completedStages of the job with ID $id.")
 
-        val nextDir = File(dir, completedSteps.toString())
-        val stepFile = File(nextDir, stepFileName)
-        val stepConfig = StepConfig.fromJsonFile(stepFile)
-        prepareFilesForNextStep(nextDir, stepConfig)
+        val nextDir = File(dir, completedStages.toString())
+        val stageFile = File(nextDir, stageFileName)
+        val stageConfig = StageConfig.fromJsonFile(stageFile)
+        prepareFilesForNextStage(nextDir, stageConfig)
         val nextLogFile = File(nextDir, oxDnaLogFileName)
         val endConfFile = File(nextDir, endConfFileName)
 
-        val success = runSimulation(stepConfig.autoExtendStep, nextDir, nextLogFile, endConfFile)
+        val success = runSimulation(stageConfig.autoExtendStage, nextDir, nextLogFile, endConfFile)
 
         if (success) {
-            completedSteps++
+            completedStages++
         } else {
             error = nextLogFile.useLines {
                 it.firstOrNull { line -> line.startsWith("ERROR:") }?.substring("ERROR: ".length)
             }
 
-            // abort next steps
+            // abort next stages
             cancelMutex.withLock {
                 if (status != JobState.CANCELED)
                     status = JobState.CANCELED
             }
         }
 
-        log.debug("The execution of a step of the job with the ID $id is completed.")
+        log.debug("The execution of a stage of the job with the ID $id is completed.")
     }
 
     /**
@@ -211,18 +211,18 @@ data class SimJob(
      * Expects all input files to already exist.
      * The simulation may be extended if necessary.
      *
-     * @param autoExtendStep determines whether this execution should be automatically extended.
+     * @param autoExtendStage determines whether this execution should be automatically extended.
      * @param currentDir the directory in which the simulation will be run.
      * @param currentLogFile the log [File] for the simulation execution.
      * @param endConfFile the [File] to store the final configuration in.
      */
     private suspend fun runSimulation(
-        autoExtendStep: Boolean,
+        autoExtendStage: Boolean,
         currentDir: File,
         currentLogFile: File,
         endConfFile: File
     ): Boolean {
-        // values for automatic step extension
+        // values for automatic stage extension
         val stepStates = LinkedList<StepState>()
 
         // run oxDNA
@@ -261,7 +261,7 @@ data class SimJob(
                     stepStates.removeFirst()
 
                 val totalSimSteps = simSteps.sum()
-                val completedSimSteps = simSteps.subList(0, completedSteps.toInt()).sum() + state.step
+                val completedSimSteps = simSteps.subList(0, completedStages.toInt()).sum() + state.step
                 this@SimJob.progress = completedSimSteps.toFloat() / totalSimSteps.toFloat()
 
                 val currentConf = endConfFile.readText()
@@ -283,7 +283,7 @@ data class SimJob(
 
         // run extension only if previous run was successful, extensions are allowed,
         // and there have been less than 200 so far
-        if (success && autoExtendStep && extensions < 200u) {
+        if (success && autoExtendStage && extensions < 200u) {
             val potentialEnergyChange =
                 (stepStates.first.potentialEnergy - stepStates.last.potentialEnergy).absoluteValue
             val distinctStretchedBonds = stepStates.mapTo(HashSet()) { it.stretchedBonds }.size
@@ -307,22 +307,22 @@ data class SimJob(
     }
 
     /**
-     * Copies the files from the previous step (or initial files for step 0) and creates the oxDNA input file.
+     * Copies the files from the previous stage (or initial files for stage 0) and creates the oxDNA input file.
      *
      * @param nextDir the directory to prepare.
-     * @param stepConfig the [StepConfig] of the step for which the files are to be prepared.
+     * @param stageConfig the [StageConfig] of the stage for which the files are to be prepared.
      */
-    private fun prepareFilesForNextStep(nextDir: File, stepConfig: StepConfig) {
+    private fun prepareFilesForNextStage(nextDir: File, stageConfig: StageConfig) {
         // prepare input file
         val inputFile = File(nextDir, inputFileName)
-        stepConfig.toPropertiesFile(inputFile)
+        stageConfig.toPropertiesFile(inputFile)
 
-        // get and copy conf file of last step
+        // get and copy conf file of last stage
         val oldConfFile =
-            if (completedSteps == 0u) {
+            if (completedStages == 0u) {
                 startConfFile
             } else {
-                val oldDir = File(dir, (completedSteps - 1u).toString())
+                val oldDir = File(dir, (completedStages - 1u).toString())
                 File(oldDir, endConfFileName)
             }
         val startConfFile = File(nextDir, startConfFileName)
@@ -330,7 +330,7 @@ data class SimJob(
     }
 
     /**
-     * Copies the files from the previous execution of the current step.
+     * Copies the files from the previous execution of the current stage.
      *
      * @param currentDir the directory to prepare.
      */
@@ -414,7 +414,7 @@ data class SimJob(
     }
 
     override fun toString(): String {
-        return "SimJob(id=$id, steps=$steps, completedSteps=$completedSteps, status=$status, progress=$progress, error=$error)"
+        return "SimJob(id=$id, stages=$stages, completedSteps=$completedStages, status=$status, progress=$progress, error=$error)"
     }
 }
 

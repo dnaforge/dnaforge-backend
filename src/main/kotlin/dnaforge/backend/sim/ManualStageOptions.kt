@@ -7,8 +7,8 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 
-object ManualStepOptions {
-    val log: Logger = LoggerFactory.getLogger(ManualStepOptions::class.java)
+object ManualStageOptions {
+    val log: Logger = LoggerFactory.getLogger(ManualStageOptions::class.java)
 
 
     /*
@@ -376,7 +376,7 @@ object ManualStepOptions {
         )
 
     /**
-     * Options available for manual step configuration.
+     * Options available for manual stage configuration.
      */
     val availableOptions: Option = Option(
         MANUAL_CONFIG, mapOf(
@@ -447,13 +447,13 @@ sealed interface SelectedEntry {
     val name: String
 
     /**
-     * Using [ManualStepOptions.availableOptions], this [SelectedEntry] is encoded into a [Map] of properties.
+     * Using [ManualStageOptions.availableOptions], this [SelectedEntry] is encoded into a [Map] of properties.
      *
-     * @param level the current level/depth in [ManualStepOptions.availableOptions].
+     * @param level the current level/depth in [ManualStageOptions.availableOptions].
      *
      * @return a new [Map] containing all the selected properties.
      */
-    fun encodeToMap(level: Entry = ManualStepOptions.availableOptions): Map<String, String>
+    fun encodeToMap(level: Entry = ManualStageOptions.availableOptions): Map<String, String>
 }
 
 /**
@@ -465,11 +465,11 @@ data class SelectedOption(override val name: String, val entries: List<SelectedE
 
     override fun encodeToMap(level: Entry): Map<String, String> = buildMap {
         if (level !is Option)
-            ManualStepOptions.log.error(IllegalArgumentException("Expected something that isn't an Option named ${level.name}."))
+            ManualStageOptions.log.error(IllegalArgumentException("Expected something that isn't an Option named ${level.name}."))
         if (name != level.name)
-            ManualStepOptions.log.error(IllegalArgumentException("Expected Option named ${level.name}."))
+            ManualStageOptions.log.error(IllegalArgumentException("Expected Option named ${level.name}."))
         if (this@SelectedOption.entries.mapTo(HashSet()) { it.name } != level.entries.mapTo(HashSet()) { it.name })
-            ManualStepOptions.log.error(IllegalArgumentException("Invalid or missing Entries in Option ${level.name}."))
+            ManualStageOptions.log.error(IllegalArgumentException("Invalid or missing Entries in Option ${level.name}."))
 
         putAll(level.fixedProperties)
         val backend = mutableSetOf<String?>()
@@ -477,7 +477,7 @@ data class SelectedOption(override val name: String, val entries: List<SelectedE
 
         this@SelectedOption.entries.forEach { entry ->
             val correspondingEntry = level.entries.firstOrNull { it.name == entry.name }
-                ?: ManualStepOptions.log.error(IllegalArgumentException("Entry named ${entry.name} not found."))
+                ?: ManualStageOptions.log.error(IllegalArgumentException("Entry named ${entry.name} not found."))
 
             val properties = entry.encodeToMap(correspondingEntry)
             putAll(properties)
@@ -503,12 +503,12 @@ data class SelectedPropertyContainer(
     override fun encodeToMap(level: Entry): Map<String, String> = buildMap {
         // this should be a Property and not a Container
         if (level !is PropertyContainer)
-            ManualStepOptions.log.error(IllegalArgumentException("Expected Property named ${level.name}."))
+            ManualStageOptions.log.error(IllegalArgumentException("Expected Property named ${level.name}."))
         if (name != level.name)
-            ManualStepOptions.log.error(IllegalArgumentException("Expected Container named ${level.name}."))
+            ManualStageOptions.log.error(IllegalArgumentException("Expected Container named ${level.name}."))
 
         val correspondingOption = level.values.firstOrNull { it.name == value.name }
-            ?: ManualStepOptions.log.error(IllegalArgumentException("Option named ${value.name} not found."))
+            ?: ManualStageOptions.log.error(IllegalArgumentException("Option named ${value.name} not found."))
 
         val properties = value.encodeToMap(correspondingOption)
         putAll(properties)
@@ -528,25 +528,25 @@ data class SelectedProperty(
     override fun encodeToMap(level: Entry): Map<String, String> = buildMap {
         // this should be a Container and not a Property
         if (level !is Property)
-            ManualStepOptions.log.error(IllegalArgumentException("Expected Container named ${level.name}."))
+            ManualStageOptions.log.error(IllegalArgumentException("Expected Container named ${level.name}."))
         if (name != level.name)
-            ManualStepOptions.log.error(IllegalArgumentException("Expected Property named ${level.name}."))
+            ManualStageOptions.log.error(IllegalArgumentException("Expected Property named ${level.name}."))
 
         // validate data type
         val valueWithSuffix = when (level.valueType) {
             ValueType.BOOLEAN -> {
                 value.toBooleanStrictOrNull()?.toString()
-                    ?: ManualStepOptions.log.error(IllegalArgumentException("Expected boolean as value. Got $value."))
+                    ?: ManualStageOptions.log.error(IllegalArgumentException("Expected boolean as value. Got $value."))
             }
 
             ValueType.UNSIGNED_INTEGER -> {
                 value.toUIntOrNull()?.toString()
-                    ?: ManualStepOptions.log.error(IllegalArgumentException("Expected unsigned integer as value. Got $value."))
+                    ?: ManualStageOptions.log.error(IllegalArgumentException("Expected unsigned integer as value. Got $value."))
             }
 
             ValueType.FLOAT -> {
                 value.toFloatOrNull()?.toString()
-                    ?: ManualStepOptions.log.error(IllegalArgumentException("Expected float as value. Got $value."))
+                    ?: ManualStageOptions.log.error(IllegalArgumentException("Expected float as value. Got $value."))
             }
         } + level.suffix
 

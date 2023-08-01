@@ -2,7 +2,7 @@ package dnaforge.backend.sim
 
 import dnaforge.backend.Environment
 import dnaforge.backend.InternalAPI
-import dnaforge.backend.stepFileName
+import dnaforge.backend.stageFileName
 import dnaforge.backend.web.Clients
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
@@ -84,7 +84,7 @@ object Jobs {
     /**
      * Creates a new [SimJob] and adds it to the execution queue.
      */
-    suspend fun submitNewJob(configs: List<StepConfig>, top: String, dat: String, forces: String): SimJob {
+    suspend fun submitNewJob(configs: List<StageConfig>, top: String, dat: String, forces: String): SimJob {
         val id = mutex.withLock {
             nextId++
         }
@@ -96,14 +96,14 @@ object Jobs {
         job.startConfFile.writeText(dat.replace("\r\n", "\n"))
         job.forcesFile.writeText(forces.replace("\r\n", "\n"))
 
-        for (indexedStep in configs.withIndex()) {
-            val i = indexedStep.index
-            val step = indexedStep.value
+        for (indexedStage in configs.withIndex()) {
+            val i = indexedStage.index
+            val stage = indexedStage.value
 
             val dir = File(job.dir, i.toString())
             dir.mkdirs()
-            val stepFile = File(dir, stepFileName)
-            step.toJsonFile(stepFile)
+            val stageFile = File(dir, stageFileName)
+            stage.toJsonFile(stageFile)
         }
 
         mutex.withLock {

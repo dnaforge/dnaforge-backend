@@ -8,7 +8,7 @@ import org.slf4j.Logger
  * File names
  */
 const val jobFileName = "job.json"
-const val stepFileName = "step.json"
+const val stageFileName = "stage.json"
 
 const val topologyFileName = "topology.top"
 const val startConfFileName = "conf_start.dat"

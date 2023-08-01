@@ -56,7 +56,7 @@ The example above should produce the following output:
 }
 ```
 
-## Get Options Available for Manual Step Configuration
+## Get Options Available for Manual Stage Configuration
 
 The server provides the available options for manual configuration.
 
@@ -84,13 +84,13 @@ echo "$response"
 
 The example above should produce a very long JSON response.
 
-## Get Default Step Configurations
+## Get Default Stage Configurations
 
-The server also provides some default steps that represent a good starting point for relaxation and simulation.
+The server also provides some default stages that represent a good starting point for relaxation and simulation.
 
 ```
 CLIENT -> GET/options/default
-SERVER -> List<StepConfig>
+SERVER -> List<StageConfig>
 ```
 
 ### Example
@@ -144,26 +144,29 @@ The example above should produce a JSON list of jobs, e.g.:
 [
   {
     "id": 0,
-    "steps": 4,
-    "completedSteps": 4,
-    "status": "DONE",
-    "progress": 1.0,
+    "stages": 4,
+    "completedStages": 2,
+    "status": "RUNNING",
+    "progress": 0.0030904198,
+    "extensions": 77,
     "error": null
   },
   {
     "id": 1,
-    "steps": 4,
-    "completedSteps": 4,
-    "status": "DONE",
-    "progress": 1.0,
+    "stages": 4,
+    "completedStages": 0,
+    "status": "NEW",
+    "progress": 0.0,
+    "extensions": 0,
     "error": null
   },
   {
     "id": 2,
-    "steps": 4,
-    "completedSteps": 4,
-    "status": "DONE",
-    "progress": 1.0,
+    "stages": 4,
+    "completedStages": 0,
+    "status": "NEW",
+    "progress": 0.0,
+    "extensions": 0,
     "error": null
   }
 ]
@@ -201,10 +204,11 @@ If a job with ID 0 exists:
 ```json
 {
   "id": 0,
-  "steps": 4,
-  "completedSteps": 4,
-  "status": "DONE",
-  "progress": 1.0,
+  "stages": 4,
+  "completedStages": 2,
+  "status": "RUNNING",
+  "progress": 0.0030904198,
+  "extensions": 106,
   "error": null
 }
 ```
@@ -212,7 +216,7 @@ If a job with ID 0 exists:
 ## Get Job Details
 
 A client can retrieve a single job along with its top dat/conf and forces data by its ID.  
-The dat data is taken from the most recently completed step.
+The dat data is taken from the most recently completed stage.
 
 ```
 CLIENT -> GET/job/details/<ID>
@@ -243,10 +247,11 @@ If a job with ID 0 exists:
 {
   "job": {
     "id": 0,
-    "steps": 4,
-    "completedSteps": 0,
-    "status": "NEW",
-    "progress": 0.0,
+    "stages": 4,
+    "completedStages": 2,
+    "status": "RUNNING",
+    "progress": 0.0030904198,
+    "extensions": 106,
     "error": null
   },
   "top": "top data",
@@ -288,7 +293,7 @@ Depending on whether there is currently a job with ID 0, the response should be 
 A new job can be submitted using a POST request.
 
 ```
-CLIENT -> POST/job: JobNew(configs: List<StepConfig>, top: String, dat: String, forces: String)
+CLIENT -> POST/job: JobNew(configs: List<StageConfig>, top: String, dat: String, forces: String)
 SERVER -> SimJob
 ```
 
@@ -301,7 +306,7 @@ SERVER -> SimJob
 bearer_token=$(curl -s 'http://0.0.0.0:8080/auth' \
   -H 'Authorization: ChangeMe')
 
-# Get the default steps
+# Get the default stages
 defaults=$(curl -s 'http://0.0.0.0:8080/options/default' \
   -H "Authorization: $bearer_token")
 
@@ -335,10 +340,11 @@ The example above should produce a new job, e.g.:
 ```json
 {
   "id": 2,
-  "steps": 4,
-  "completedSteps": 0,
+  "stages": 4,
+  "completedStages": 0,
   "status": "NEW",
   "progress": 0.0,
+  "extensions": 0,
   "error": null
 }
 ```
@@ -505,7 +511,7 @@ SERVER -> WS/JobUpdate(jobId: UInt, job: SimJob?)
 bearer_token=$(curl -s 'http://0.0.0.0:8080/auth' \
   -H 'Authorization: ChangeMe')
 
-# Get the default steps
+# Get the default stages
 defaults=$(curl -s 'http://0.0.0.0:8080/options/default' \
   -H "Authorization: $bearer_token")
 
@@ -541,13 +547,14 @@ Over time, updates such as the following should be received:
 ```json
 {
   "type": "JobUpdate",
-  "jobId": 4,
+  "jobId": 0,
   "job": {
-    "id": 4,
-    "steps": 4,
-    "completedSteps": 1,
+    "id": 0,
+    "stages": 4,
+    "completedStages": 1,
     "status": "RUNNING",
     "progress": 0.0019938191,
+    "extensions": 0,
     "error": null
   }
 }
@@ -570,7 +577,7 @@ SERVER -> DetailedUpdate(job: SimJob, val conf: String)
 bearer_token=$(curl -s 'http://0.0.0.0:8080/auth' \
   -H 'Authorization: ChangeMe')
 
-# Get the default steps
+# Get the default stages
 defaults=$(curl -s 'http://0.0.0.0:8080/options/default' \
   -H "Authorization: $bearer_token")
 

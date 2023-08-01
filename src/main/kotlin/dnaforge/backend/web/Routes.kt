@@ -1,7 +1,7 @@
 package dnaforge.backend.web
 
 import dnaforge.backend.sim.Jobs
-import dnaforge.backend.sim.ManualStepOptions
+import dnaforge.backend.sim.ManualStageOptions
 import dnaforge.backend.sim.SimJob
 import dnaforge.backend.sim.default
 import dnaforge.backend.simpleJson
@@ -58,7 +58,7 @@ fun Application.configureRoutes() {
         route("/options") {
             get("/available") {
                 ifAuthorized {
-                    call.respond(ManualStepOptions.availableOptions)
+                    call.respond(ManualStageOptions.availableOptions)
                 }
             }
 

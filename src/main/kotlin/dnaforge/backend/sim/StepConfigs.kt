@@ -9,25 +9,25 @@ import kotlinx.serialization.json.encodeToStream
 import java.io.File
 
 /**
- * Default step list.
+ * Default stage list.
  */
-val default: List<StepConfig> = listOf(
-    ManualConfig(true, ManualStepOptions.min),
-    ManualConfig(true, ManualStepOptions.mcRelax),
-    ManualConfig(true, ManualStepOptions.mdRelax),
-    ManualConfig(false, ManualStepOptions.mdSim)
+val default: List<StageConfig> = listOf(
+    ManualConfig(true, ManualStageOptions.min),
+    ManualConfig(true, ManualStageOptions.mcRelax),
+    ManualConfig(true, ManualStageOptions.mdRelax),
+    ManualConfig(false, ManualStageOptions.mdSim)
 )
 
 
 /**
- * Super class for all types of configurations that can be used to configure a simulation or relaxation step.
+ * Super class for all types of configurations that can be used to configure a simulation or relaxation stage.
  */
 @Serializable
-sealed class StepConfig {
-    abstract val autoExtendStep: Boolean
+sealed class StageConfig {
+    abstract val autoExtendStage: Boolean
 
     /**
-     * Writes this [StepConfig] to the specified JSON [File].
+     * Writes this [StageConfig] to the specified JSON [File].
      *
      * @param file the file to write to. Existing content is overwritten.
      */
@@ -35,16 +35,16 @@ sealed class StepConfig {
     fun toJsonFile(file: File) = file.outputStream().use { prettyJson.encodeToStream(this, it) }
 
     /**
-     * Encodes this [StepConfig] into a [Map].
+     * Encodes this [StageConfig] into a [Map].
      *
-     * @return a new [Map] containing the properties of this [StepConfig].
+     * @return a new [Map] containing the properties of this [StageConfig].
      */
     protected abstract fun encodeToMap(): Map<String, String>
 
     /**
      * Uses [encodeToMap] and adds some important default values.
      *
-     * @return a new [Map] containing the properties of this [StepConfig] and some default values.
+     * @return a new [Map] containing the properties of this [StageConfig] and some default values.
      */
     fun getParameterMap(): Map<String, String> = buildMap {
         this.putAll(encodeToMap())
@@ -80,7 +80,7 @@ sealed class StepConfig {
     }
 
     /**
-     * Writes this [StepConfig] to the specified properties [File].
+     * Writes this [StageConfig] to the specified properties [File].
      *
      * @param file the file to write to. Existing content is overwritten.
      */
@@ -90,23 +90,23 @@ sealed class StepConfig {
     companion object {
 
         /**
-         * Reads a [StepConfig] from the specified JSON [File].
+         * Reads a [StageConfig] from the specified JSON [File].
          *
          * @param file the [File] to read from.
          *
-         * @return a new [StepConfig] instance.
+         * @return a new [StageConfig] instance.
          */
         @OptIn(ExperimentalSerializationApi::class)
-        fun fromJsonFile(file: File): StepConfig = file.inputStream().use { prettyJson.decodeFromStream(it) }
+        fun fromJsonFile(file: File): StageConfig = file.inputStream().use { prettyJson.decodeFromStream(it) }
     }
 }
 
 /**
- * [FileConfig] is a type of [StepConfig] and is to be used to represent a pre-made oxDNA input file.
+ * [FileConfig] is a type of [StageConfig] and is to be used to represent a pre-made oxDNA input file.
  */
 @Serializable
 @SerialName("FileConfig")
-data class FileConfig(override val autoExtendStep: Boolean, val content: String) : StepConfig() {
+data class FileConfig(override val autoExtendStage: Boolean, val content: String) : StageConfig() {
 
     override fun encodeToMap(): Map<String, String> = buildMap {
         content.lineSequence()
@@ -124,12 +124,12 @@ data class FileConfig(override val autoExtendStep: Boolean, val content: String)
 }
 
 /**
- * [ManualConfig] is a type of [StepConfig]
+ * [ManualConfig] is a type of [StageConfig]
  * and is to be used to represent an oxDNA input file with a permissive set of options.
  */
 @Serializable
 @SerialName("ManualConfig")
-data class ManualConfig(override val autoExtendStep: Boolean, val options: SelectedOption) : StepConfig() {
+data class ManualConfig(override val autoExtendStage: Boolean, val options: SelectedOption) : StageConfig() {
 
     override fun encodeToMap(): Map<String, String> = options.encodeToMap()
 }
