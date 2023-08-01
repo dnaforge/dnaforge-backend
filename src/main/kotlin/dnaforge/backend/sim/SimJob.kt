@@ -14,9 +14,11 @@ import kotlinx.serialization.json.decodeFromStream
 import kotlinx.serialization.json.encodeToStream
 import org.slf4j.LoggerFactory
 import java.io.*
+import java.util.*
 import java.util.concurrent.TimeUnit
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
+import kotlin.math.absoluteValue
 
 
 /**
@@ -31,6 +33,7 @@ data class SimJob(
     var status: JobState = JobState.NEW
         private set
     private var progress: Float = 0.0f
+    private var extensions: UInt = 0u
     private var error: String? = null
 
     @Transient
@@ -178,54 +181,13 @@ data class SimJob(
         log.debug("Running step $completedSteps of the job with ID $id.")
 
         val nextDir = File(dir, completedSteps.toString())
-        prepareFilesForNextStep(nextDir)
+        val stepFile = File(nextDir, stepFileName)
+        val stepConfig = StepConfig.fromJsonFile(stepFile)
+        prepareFilesForNextStep(nextDir, stepConfig)
         val nextLogFile = File(nextDir, oxDnaLogFileName)
         val endConfFile = File(nextDir, endConfFileName)
 
-        // run oxDNA
-        val pb = ProcessBuilder()
-        pb.directory(nextDir)
-        pb.command(listOf("oxDNA", inputFileName))
-        // for some reason, oxDNA only writes the energy to std out and everything else to std error
-        pb.redirectError(ProcessBuilder.Redirect.appendTo(nextLogFile))
-
-        var energyStream: BufferedReader? = null
-        val cancel = cancelMutex.withLock {
-            if (status == JobState.CANCELED) {
-                true
-            } else {
-                process = pb.start()
-                energyStream = BufferedReader(InputStreamReader(process!!.inputStream))
-                false
-            }
-        }
-        if (cancel) return
-
-        // we use the fact that the print interval of the trajectory and energy are the same to push detailed updates to clients
-        withContext(Dispatchers.IO) {
-            var line: String?
-            while (true) {
-                line = try {
-                    energyStream?.readLine()
-                } catch (e: IOException) {
-                    null
-                }
-                if (line == null) break
-
-                val currentConf = endConfFile.readText()
-                val completedInCurrentConf =
-                    currentConf.lineSequence().firstOrNull { it.startsWith("t = ") }?.substring("t = ".length)
-                        ?.toUIntOrNull() ?: 0u
-                val totalSimSteps = simSteps.sum()
-                val completedSimSteps = simSteps.subList(0, completedSteps.toInt()).sum() + completedInCurrentConf
-                this@SimJob.progress = completedSimSteps.toFloat() / totalSimSteps.toFloat()
-                Clients.propagateDetailedUpdate(this@SimJob, currentConf)
-            }
-        }
-
-        val exitCode = process?.waitFor()
-
-        val success = exitCode == 0
+        val success = runSimulation(stepConfig.autoExtendStep, nextDir, nextLogFile, endConfFile)
 
         if (success) {
             completedSteps++
@@ -245,14 +207,113 @@ data class SimJob(
     }
 
     /**
+     * Runs oxDNA in the specified [currentDir].
+     * Expects all input files to already exist.
+     * The simulation may be extended if necessary.
+     *
+     * @param autoExtendStep determines whether this execution should be automatically extended.
+     * @param currentDir the directory in which the simulation will be run.
+     * @param currentLogFile the log [File] for the simulation execution.
+     * @param endConfFile the [File] to store the final configuration in.
+     */
+    private suspend fun runSimulation(
+        autoExtendStep: Boolean,
+        currentDir: File,
+        currentLogFile: File,
+        endConfFile: File
+    ): Boolean {
+        // values for automatic step extension
+        val stepStates = LinkedList<StepState>()
+
+        // run oxDNA
+        val pb = ProcessBuilder()
+        pb.directory(currentDir)
+        pb.command(listOf("oxDNA", inputFileName))
+        // for some reason, oxDNA only writes the energy to std out and everything else to std error
+        pb.redirectError(ProcessBuilder.Redirect.appendTo(currentLogFile))
+
+        var energyStream: BufferedReader? = null
+        val cancel = cancelMutex.withLock {
+            if (status == JobState.CANCELED) {
+                true
+            } else {
+                process = pb.start()
+                energyStream = BufferedReader(InputStreamReader(process!!.inputStream))
+                false
+            }
+        }
+        if (cancel) return false
+
+        // we use the fact that the print interval of the trajectory and energy are the same to push detailed updates to clients
+        withContext(Dispatchers.IO) {
+            var line: String?
+            while (true) {
+                // read custom observables line
+                line = try {
+                    energyStream?.readLine()
+                } catch (e: IOException) {
+                    null
+                }
+                if (line == null) break
+                val state = StepState.fromObservableLine(line)
+                stepStates.add(state)
+                if (stepStates.size > 5) // retain 5 states
+                    stepStates.removeFirst()
+
+                val totalSimSteps = simSteps.sum()
+                val completedSimSteps = simSteps.subList(0, completedSteps.toInt()).sum() + state.step
+                this@SimJob.progress = completedSimSteps.toFloat() / totalSimSteps.toFloat()
+
+                val currentConf = endConfFile.readText()
+                Clients.propagateDetailedUpdate(this@SimJob, currentConf)
+
+                // read default observables line
+                try {
+                    energyStream?.readLine()
+                } catch (_: IOException) {
+                }
+            }
+        }
+
+        // blocks job execution scope located in the Jobs object
+        // intended behavior, as this prevents multiple jobs from running in parallel
+        val exitCode = process?.waitFor()
+
+        var success = exitCode == 0
+
+        // run extension only if previous run was successful, extensions are allowed,
+        // and there have been less than 200 so far
+        if (success && autoExtendStep && extensions < 200u) {
+            val potentialEnergyChange =
+                (stepStates.first.potentialEnergy - stepStates.last.potentialEnergy).absoluteValue
+            val distinctStretchedBonds = stepStates.mapTo(HashSet()) { it.stretchedBonds }.size
+            if (// potential energy still changes a lot
+                potentialEnergyChange > 0.01f
+                // number of stretched bonds is still changing
+                || distinctStretchedBonds > 1
+            ) {
+                extensions++
+                log.debug(
+                    "Running extension {}. Potential Energy change: {}; Distinct Stretched Bonds: {}",
+                    extensions, potentialEnergyChange, distinctStretchedBonds
+                )
+                Clients.propagateUpdate(id, this)
+                prepareFilesForExtension(currentDir)
+                success = runSimulation(true, currentDir, currentLogFile, endConfFile)
+            }
+        }
+
+        return success
+    }
+
+    /**
      * Copies the files from the previous step (or initial files for step 0) and creates the oxDNA input file.
      *
      * @param nextDir the directory to prepare.
+     * @param stepConfig the [StepConfig] of the step for which the files are to be prepared.
      */
-    private fun prepareFilesForNextStep(nextDir: File) {
+    private fun prepareFilesForNextStep(nextDir: File, stepConfig: StepConfig) {
         // prepare input file
-        val stepFile = File(nextDir, stepFileName)
-        val stepConfig = StepConfig.fromJsonFile(stepFile)
         val inputFile = File(nextDir, inputFileName)
         stepConfig.toPropertiesFile(inputFile)
 
@@ -265,6 +326,18 @@ data class SimJob(
                 File(oldDir, endConfFileName)
             }
         val startConfFile = File(nextDir, startConfFileName)
+        oldConfFile.copyTo(startConfFile, true)
+    }
+
+    /**
+     * Copies the files from the previous execution of the current step.
+     *
+     * @param currentDir the directory to prepare.
+     */
+    private fun prepareFilesForExtension(currentDir: File) {
+        // get and copy conf file from the last run
+        val oldConfFile = File(currentDir, endConfFileName)
+        val startConfFile = File(currentDir, startConfFileName)
         oldConfFile.copyTo(startConfFile, true)
     }
 
@@ -353,4 +426,24 @@ enum class JobState {
     RUNNING,
     DONE,
     CANCELED
+}
+
+/**
+ * Represents some interesting metrics about the structure after a specific step.
+ */
+data class StepState(val step: UInt, val potentialEnergy: Float, val stretchedBonds: UInt) {
+    companion object {
+
+        /**
+         * Extracts the needed metrics from the given observables line.
+         *
+         * @param line a single observables line.
+         *
+         * @return a new [StepState] instance.
+         */
+        fun fromObservableLine(line: String): StepState {
+            val observables = line.trim().split("\\s+".toRegex())
+            return StepState(observables[0].toUInt(), observables[1].toFloat(), observables[2].toUInt())
+        }
+    }
 }

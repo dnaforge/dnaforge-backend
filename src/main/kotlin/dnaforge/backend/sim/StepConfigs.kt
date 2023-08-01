@@ -60,6 +60,23 @@ sealed class StepConfig {
         this["trajectory_file"] = trajectoryFileName
         this["energy_file"] = energyFileName
         this["max_io"] = "100.0"
+        this["data_output_1"] = """{
+	name = stdout
+	linear = true
+	print_every = ${this["print_energy_every"]}
+	col_1 = {
+		type = step
+		units = steps
+	}
+	col_2 = {
+		type = potential_energy
+		split = false
+	}
+	col_3 = {
+		type = stretched
+		print_list = false
+	}
+}"""
     }
 
     /**
