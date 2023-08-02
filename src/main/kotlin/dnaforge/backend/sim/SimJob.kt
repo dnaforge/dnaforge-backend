@@ -183,12 +183,12 @@ data class SimJob(
         val nextDir = File(dir, completedStages.toString())
         val stageFile = File(nextDir, stageFileName)
         val stageConfig = StageConfig.fromJsonFile(stageFile)
-        prepareFilesForNextStage(nextDir, stageConfig)
         val nextLogFile = File(nextDir, oxDnaLogFileName)
         val endConfFile = File(nextDir, endConfFileName)
 
         // catch any exception that might occur
         val success = try {
+            prepareFilesForNextStage(nextDir, stageConfig)
             runSimulation(stageConfig.autoExtendStage, nextDir, nextLogFile, endConfFile)
         } catch (e: Throwable) {
             log.error(e)
