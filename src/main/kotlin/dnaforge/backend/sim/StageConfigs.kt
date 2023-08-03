@@ -18,26 +18,34 @@ object StageConfigs {
      */
     val default: List<StageConfig> = listOf(
         ManualConfig(
-            "First Relaxation Stage",
-            "Relaxes the structure using a type of potential energy minimization.",
+            mapOf(
+                "title" to "First Relaxation Stage",
+                "description" to "Relaxes the structure using a type of potential energy minimization."
+            ),
             true,
             ManualStageOptions.min
         ),
         ManualConfig(
-            "Second Relaxation Stage",
-            "Relaxes the structure with a short Monte Carlo simulation.",
+            mapOf(
+                "title" to "Second Relaxation Stage",
+                "description" to "Relaxes the structure with a short Monte Carlo simulation."
+            ),
             true,
             ManualStageOptions.mcRelax
         ),
         ManualConfig(
-            "Third Relaxation Stage",
-            "Relaxes the structure with a short molecular dynamics simulation with a very small ΔT.",
+            mapOf(
+                "title" to "Third Relaxation Stage",
+                "description" to "Relaxes the structure with a short molecular dynamics simulation with a very small ΔT."
+            ),
             true,
             ManualStageOptions.mdRelax
         ),
         ManualConfig(
-            "Simulation Stage",
-            "Simulates the relaxed structure with a molecular dynamics simulation.",
+            mapOf(
+                "title" to "Simulation Stage",
+                "description" to "Simulates the relaxed structure with a molecular dynamics simulation."
+            ),
             false,
             ManualStageOptions.mdSim
         )
@@ -47,8 +55,7 @@ object StageConfigs {
         when (it) {
             is FileConfig -> it
             is ManualConfig -> FileConfig(
-                it.title,
-                it.description,
+                it.metadata,
                 it.autoExtendStage,
                 it.getParameterMap().entries.joinToString("\n") { (key, value) -> "$key = $value" }
             )
@@ -61,8 +68,7 @@ object StageConfigs {
         when (it) {
             is FileConfig -> log.throwError(IllegalArgumentException("FileConfigs cannot currently be converted to PropertiesConfigs."))
             is ManualConfig -> PropertiesConfig(
-                it.title,
-                it.description,
+                it.metadata,
                 it.autoExtendStage,
                 getAllSelectedProperties(it.options)
             )
@@ -101,8 +107,7 @@ object StageConfigs {
  */
 @Serializable
 sealed class StageConfig {
-    abstract val title: String
-    abstract val description: String
+    abstract val metadata: Map<String, String>
     abstract val autoExtendStage: Boolean
 
     /**
@@ -186,8 +191,7 @@ sealed class StageConfig {
 @Serializable
 @SerialName("FileConfig")
 data class FileConfig(
-    override val title: String,
-    override val description: String,
+    override val metadata: Map<String, String>,
     override val autoExtendStage: Boolean,
     val content: String
 ) : StageConfig() {
@@ -214,8 +218,7 @@ data class FileConfig(
 @Serializable
 @SerialName("ManualConfig")
 data class ManualConfig(
-    override val title: String,
-    override val description: String,
+    override val metadata: Map<String, String>,
     override val autoExtendStage: Boolean,
     val options: SelectedOption
 ) : StageConfig() {
@@ -230,8 +233,7 @@ data class ManualConfig(
 @Serializable
 @SerialName("PropertiesConfig")
 data class PropertiesConfig(
-    override val title: String,
-    override val description: String,
+    override val metadata: Map<String, String>,
     override val autoExtendStage: Boolean,
     val properties: Set<SelectedProperty>
 ) : StageConfig() {

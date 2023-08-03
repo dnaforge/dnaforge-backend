@@ -40,7 +40,12 @@ class ReceiveUpdateTest {
             assertTrue(message.success)
 
             // submit job
-            val job0 = Jobs.submitNewJob(StageConfigs.default, top, dat, forces)
+            val job0 = Jobs.submitNewJob(
+                mapOf(
+                    "title" to "Some Job",
+                    "description" to "A very important Job"
+                ), StageConfigs.default, top, dat, forces
+            )
             frame = incoming.receive()
             assertIs<Frame.Text>(frame)
             message = frame.toMessage()
@@ -73,7 +78,12 @@ class ReceiveUpdateTest {
             assertTrue(message.success)
 
             // submit job
-            val job0 = Jobs.submitNewJob(StageConfigs.default, top, dat, forces)
+            val job0 = Jobs.submitNewJob(
+                mapOf(
+                    "title" to "Some Job",
+                    "description" to "A very important Job"
+                ), StageConfigs.default, top, dat, forces
+            )
             client.post("/job/subscribe/0") {
                 header(HttpHeaders.Authorization, bearerToken)
             }.apply {

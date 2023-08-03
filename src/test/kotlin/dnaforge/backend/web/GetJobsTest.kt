@@ -43,7 +43,12 @@ class GetJobsTest {
             assertEquals(0, jobs.size)
         }
 
-        val job0 = Jobs.submitNewJob(StageConfigs.default, top, dat, forces)
+        val job0 = Jobs.submitNewJob(
+            mapOf(
+                "title" to "Some Job",
+                "description" to "A very important Job"
+            ), StageConfigs.default, top, dat, forces
+        )
 
         client.get("/job") {
             header(HttpHeaders.Authorization, bearerToken)
@@ -54,7 +59,12 @@ class GetJobsTest {
             assertEquals(job0, jobs[0])
         }
 
-        val job1 = Jobs.submitNewJob(StageConfigs.default, top, dat, forces)
+        val job1 = Jobs.submitNewJob(
+            mapOf(
+                "title" to "Some Job",
+                "description" to "A very important Job"
+            ), StageConfigs.default, top, dat, forces
+        )
 
         client.get("/job") {
             header(HttpHeaders.Authorization, bearerToken)

@@ -293,7 +293,7 @@ Depending on whether there is currently a job with ID 0, the response should be 
 A new job can be submitted using a POST request.
 
 ```
-CLIENT -> POST/job: JobNew(configs: List<StageConfig>, top: String, dat: String, forces: String)
+CLIENT -> POST/job: JobNew(metadata: Map<String, String>, configs: List<StageConfig>, top: String, dat: String, forces: String)
 SERVER -> SimJob
 ```
 
@@ -318,7 +318,7 @@ forces=$(cat './src/test/resources/tetrahedron.forces')
 # Save the JSON data to a temporary file
 # Otherwise the command would be too long
 tmp_file=$(mktemp)
-echo "{\"configs\":$defaults,\"top\":\"$top\",\"dat\":\"$dat\",\"forces\":\"$forces\"}" >"$tmp_file"
+echo "{\"metadata\":{\"title\":\"Some Job\",\"description\":\"A very important Job\"},\"configs\":$defaults,\"top\":\"$top\",\"dat\":\"$dat\",\"forces\":\"$forces\"}" >"$tmp_file"
 
 # Submit new job
 # Use --data-binary to read the JSON data from the temporary file
@@ -523,7 +523,7 @@ forces=$(cat './src/test/resources/tetrahedron.forces')
 # Save the JSON data to a temporary file
 # Otherwise the command would be too long
 tmp_file=$(mktemp)
-echo "{\"configs\":$defaults,\"top\":\"$top\",\"dat\":\"$dat\",\"forces\":\"$forces\"}" >"$tmp_file"
+echo "{\"metadata\":{\"title\":\"Some Job\",\"description\":\"A very important Job\"},\"configs\":$defaults,\"top\":\"$top\",\"dat\":\"$dat\",\"forces\":\"$forces\"}" >"$tmp_file"
 
 # Submit new job
 # Use --data-binary to read the JSON data from the temporary file
@@ -589,7 +589,7 @@ forces=$(cat './src/test/resources/tetrahedron.forces')
 # Save the JSON data to a temporary file
 # Otherwise the command would be too long
 tmp_file=$(mktemp)
-echo "{\"configs\":$defaults,\"top\":\"$top\",\"dat\":\"$dat\",\"forces\":\"$forces\"}" >"$tmp_file"
+echo "{\"metadata\":{\"title\":\"Some Job\",\"description\":\"A very important Job\"},\"configs\":$defaults,\"top\":\"$top\",\"dat\":\"$dat\",\"forces\":\"$forces\"}" >"$tmp_file"
 
 # Submit new job
 # Use --data-binary to read the JSON data from the temporary file

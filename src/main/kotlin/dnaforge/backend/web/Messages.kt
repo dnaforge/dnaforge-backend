@@ -10,7 +10,7 @@ import dnaforge.backend.sim.StageConfig
  * Sends the list of [StageConfig]s along the structure files.
  */
 @Serializable
-data class JobNew(val configs: List<StageConfig>, val top: String, val dat: String, val forces: String)
+data class JobNew(val metadata: Map<String, String>, val configs: List<StageConfig>, val top: String, val dat: String, val forces: String)
 
 /**
  * Sent by the server.

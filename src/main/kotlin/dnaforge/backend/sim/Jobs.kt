@@ -84,11 +84,17 @@ object Jobs {
     /**
      * Creates a new [SimJob] and adds it to the execution queue.
      */
-    suspend fun submitNewJob(configs: List<StageConfig>, top: String, dat: String, forces: String): SimJob {
+    suspend fun submitNewJob(
+        metadata: Map<String, String>,
+        configs: List<StageConfig>,
+        top: String,
+        dat: String,
+        forces: String
+    ): SimJob {
         val id = mutex.withLock {
             nextId++
         }
-        val job = SimJob(id, configs.size.toUInt())
+        val job = SimJob(metadata, id, configs.size.toUInt())
 
         // write files
         job.toDisk()

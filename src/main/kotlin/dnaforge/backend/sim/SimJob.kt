@@ -26,6 +26,7 @@ import kotlin.math.absoluteValue
  */
 @Serializable
 data class SimJob(
+    val metadata: Map<String, String>,
     val id: UInt,
     val stages: UInt
 ) {

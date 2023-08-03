@@ -38,11 +38,23 @@ class SubmitJobTest {
         client.post("/job") {
             header(HttpHeaders.Authorization, bearerToken)
             contentType(ContentType.Application.Json)
-            setBody(JobNew(StageConfigs.default, top, dat, forces))
+            setBody(
+                JobNew(
+                    mapOf(
+                        "title" to "Some Job",
+                        "description" to "A very important Job"
+                    ), StageConfigs.default, top, dat, forces
+                )
+            )
         }.apply {
             assertEquals(HttpStatusCode.OK, status)
             val job0: SimJob = body()
-            val expected = SimJob(0u, StageConfigs.default.size.toUInt())
+            val expected = SimJob(
+                mapOf(
+                    "title" to "Some Job",
+                    "description" to "A very important Job"
+                ), 0u, StageConfigs.default.size.toUInt()
+            )
             assertEquals(expected, job0)
             val jobs = Jobs.getJobs()
             assertEquals(1, jobs.size)
@@ -52,11 +64,23 @@ class SubmitJobTest {
         client.post("/job") {
             header(HttpHeaders.Authorization, bearerToken)
             contentType(ContentType.Application.Json)
-            setBody(JobNew(StageConfigs.default, top, dat, forces))
+            setBody(
+                JobNew(
+                    mapOf(
+                        "title" to "Some Job",
+                        "description" to "A very important Job"
+                    ), StageConfigs.default, top, dat, forces
+                )
+            )
         }.apply {
             assertEquals(HttpStatusCode.OK, status)
             val job0: SimJob = body()
-            val expected = SimJob(1u, StageConfigs.default.size.toUInt())
+            val expected = SimJob(
+                mapOf(
+                    "title" to "Some Job",
+                    "description" to "A very important Job"
+                ), 1u, StageConfigs.default.size.toUInt()
+            )
             assertEquals(expected, job0)
             val jobs = Jobs.getJobs()
             assertEquals(2, jobs.size)
