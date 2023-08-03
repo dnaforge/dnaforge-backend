@@ -43,6 +43,8 @@ fun Application.configureRoutes() {
         allowHost("dnaforge.org", schemes = listOf("http", "https"))
         allowHeader(HttpHeaders.ContentType)
         allowHeader(HttpHeaders.Authorization)
+        allowMethod(HttpMethod.Delete)
+        allowMethod(HttpMethod.Patch)
     }
 
     routing {
