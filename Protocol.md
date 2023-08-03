@@ -565,7 +565,7 @@ Over time, updates such as the following should be received:
 The server provides a client with detailed job updates when the client is subscribed to a job.
 
 ```
-SERVER -> DetailedUpdate(job: SimJob, val conf: String)
+SERVER -> DetailedUpdate(job: SimJob, val top: String, val dat: String)
 ```
 
 ### Example

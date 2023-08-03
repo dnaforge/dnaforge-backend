@@ -60,4 +60,4 @@ data class JobUpdate(val jobId: UInt, val job: SimJob?) : WebSocketMessage
  */
 @Serializable
 @SerialName("DetailedUpdate")
-data class DetailedUpdate(val job: SimJob, val conf: String) : WebSocketMessage
+data class DetailedUpdate(val job: SimJob, val top: String, val dat: String) : WebSocketMessage

@@ -123,11 +123,13 @@ object Clients {
      * Sends a detailed update to all [Client]s subscribed to the [SimJob] specified by the ID.
      *
      * @param job the [SimJob] that encountered an update.
-     * @param conf the update data.
+     * @param dat the update data.
      */
-    suspend fun propagateDetailedUpdate(job: SimJob, conf: String) {
+    suspend fun propagateDetailedUpdate(job: SimJob, dat: String) {
         mutex.withLock {
-            jobIdSubscribedClient[job.id]?.forEach { it.trySendMessage(DetailedUpdate(job, conf)) }
+            jobIdSubscribedClient[job.id]?.forEach {
+                it.trySendMessage(DetailedUpdate(job, job.topFile.readText(), dat))
+            }
         }
 
         log.debug("A detailed update has been propagated to all clients subscribed to the job with ID {}", job.id)
