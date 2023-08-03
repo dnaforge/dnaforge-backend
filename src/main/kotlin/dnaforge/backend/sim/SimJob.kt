@@ -269,6 +269,7 @@ data class SimJob(
                 val totalSimSteps = simSteps.sum()
                 val completedSimSteps = simSteps.subList(0, completedStages.toInt()).sum() + state.step
                 this@SimJob.progress = completedSimSteps.toFloat() / totalSimSteps.toFloat()
+                Clients.propagateUpdate(this@SimJob.id, this@SimJob)
 
                 val currentConf = endConfFile.readText()
                 Clients.propagateDetailedUpdate(this@SimJob, currentConf)
