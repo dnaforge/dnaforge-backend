@@ -6,37 +6,94 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.decodeFromStream
 import kotlinx.serialization.json.encodeToStream
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import java.io.File
 
-/**
- * Default stage list.
- */
-val default: List<StageConfig> = listOf(
-    ManualConfig(
-        "First Relaxation Stage",
-        "Relaxes the structure using a type of potential energy minimization.",
-        true,
-        ManualStageOptions.min
-    ),
-    ManualConfig(
-        "Second Relaxation Stage",
-        "Relaxes the structure with a short Monte Carlo simulation.",
-        true,
-        ManualStageOptions.mcRelax
-    ),
-    ManualConfig(
-        "Third Relaxation Stage",
-        "Relaxes the structure with a short molecular dynamics simulation with a very small ΔT.",
-        true,
-        ManualStageOptions.mdRelax
-    ),
-    ManualConfig(
-        "Simulation Stage",
-        "Simulates the relaxed structure with a molecular dynamics simulation.",
-        false,
-        ManualStageOptions.mdSim
+object StageConfigs {
+    val log: Logger = LoggerFactory.getLogger(StageConfigs::class.java)
+
+    /**
+     * Default stage list.
+     */
+    val default: List<StageConfig> = listOf(
+        ManualConfig(
+            "First Relaxation Stage",
+            "Relaxes the structure using a type of potential energy minimization.",
+            true,
+            ManualStageOptions.min
+        ),
+        ManualConfig(
+            "Second Relaxation Stage",
+            "Relaxes the structure with a short Monte Carlo simulation.",
+            true,
+            ManualStageOptions.mcRelax
+        ),
+        ManualConfig(
+            "Third Relaxation Stage",
+            "Relaxes the structure with a short molecular dynamics simulation with a very small ΔT.",
+            true,
+            ManualStageOptions.mdRelax
+        ),
+        ManualConfig(
+            "Simulation Stage",
+            "Simulates the relaxed structure with a molecular dynamics simulation.",
+            false,
+            ManualStageOptions.mdSim
+        )
     )
-)
+
+    val defaultFiles: List<StageConfig> = default.map {
+        when (it) {
+            is FileConfig -> it
+            is ManualConfig -> FileConfig(
+                it.title,
+                it.description,
+                it.autoExtendStage,
+                it.getParameterMap().entries.joinToString("\n") { (key, value) -> "$key = $value" }
+            )
+
+            is PropertiesConfig -> it
+        }
+    }
+
+    val defaultProperties: List<StageConfig> = default.map {
+        when (it) {
+            is FileConfig -> log.throwError(IllegalArgumentException("FileConfigs cannot currently be converted to PropertiesConfigs."))
+            is ManualConfig -> PropertiesConfig(
+                it.title,
+                it.description,
+                it.autoExtendStage,
+                getAllSelectedProperties(it.options)
+            )
+
+            is PropertiesConfig -> it
+        }
+    }
+
+    /**
+     * Recursively collects all selected Properties in the given [SelectedOption].
+     */
+    private fun getAllSelectedProperties(
+        option: SelectedOption,
+        set: MutableSet<SelectedProperty> = mutableSetOf()
+    ): MutableSet<SelectedProperty> {
+        option.entries.forEach {
+            when (it) {
+                is SelectedProperty -> set.add(it)
+
+                is SelectedPropertyContainer -> {
+                    set.add(SelectedProperty(it.name, it.value.name))
+                    getAllSelectedProperties(it.value, set)
+                }
+
+                is SelectedOption -> getAllSelectedProperties(it, set)
+            }
+        }
+
+        return set
+    }
+}
 
 
 /**
@@ -164,4 +221,21 @@ data class ManualConfig(
 ) : StageConfig() {
 
     override fun encodeToMap(): Map<String, String> = options.encodeToMap()
+}
+
+/**
+ * [PropertiesConfig] is a type of [StageConfig]
+ * and is to be used to represent an oxDNA input file with a permissive set of properties.
+ */
+@Serializable
+@SerialName("PropertiesConfig")
+data class PropertiesConfig(
+    override val title: String,
+    override val description: String,
+    override val autoExtendStage: Boolean,
+    val properties: Set<SelectedProperty>
+) : StageConfig() {
+
+    override fun encodeToMap(): Map<String, String> =
+        ManualStageOptions.selectedPropertiesToSelectedOption(properties).encodeToMap()
 }

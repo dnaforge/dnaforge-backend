@@ -3,7 +3,7 @@ package dnaforge.backend.web
 import dnaforge.backend.InternalAPI
 import dnaforge.backend.sim.Jobs
 import dnaforge.backend.sim.SimJob
-import dnaforge.backend.sim.default
+import dnaforge.backend.sim.StageConfigs
 import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.http.*
@@ -38,11 +38,11 @@ class SubmitJobTest {
         client.post("/job") {
             header(HttpHeaders.Authorization, bearerToken)
             contentType(ContentType.Application.Json)
-            setBody(JobNew(default, top, dat, forces))
+            setBody(JobNew(StageConfigs.default, top, dat, forces))
         }.apply {
             assertEquals(HttpStatusCode.OK, status)
             val job0: SimJob = body()
-            val expected = SimJob(0u, default.size.toUInt())
+            val expected = SimJob(0u, StageConfigs.default.size.toUInt())
             assertEquals(expected, job0)
             val jobs = Jobs.getJobs()
             assertEquals(1, jobs.size)
@@ -52,11 +52,11 @@ class SubmitJobTest {
         client.post("/job") {
             header(HttpHeaders.Authorization, bearerToken)
             contentType(ContentType.Application.Json)
-            setBody(JobNew(default, top, dat, forces))
+            setBody(JobNew(StageConfigs.default, top, dat, forces))
         }.apply {
             assertEquals(HttpStatusCode.OK, status)
             val job0: SimJob = body()
-            val expected = SimJob(1u, default.size.toUInt())
+            val expected = SimJob(1u, StageConfigs.default.size.toUInt())
             assertEquals(expected, job0)
             val jobs = Jobs.getJobs()
             assertEquals(2, jobs.size)

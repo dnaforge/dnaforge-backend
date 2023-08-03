@@ -3,7 +3,7 @@ package dnaforge.backend.web
 import dnaforge.backend.sim.Jobs
 import dnaforge.backend.sim.ManualStageOptions
 import dnaforge.backend.sim.SimJob
-import dnaforge.backend.sim.default
+import dnaforge.backend.sim.StageConfigs
 import dnaforge.backend.simpleJson
 import dnaforge.backend.zipFileName
 import io.ktor.http.*
@@ -56,15 +56,34 @@ fun Application.configureRoutes() {
 
 
         route("/options") {
-            get("/available") {
-                ifAuthorized {
-                    call.respond(ManualStageOptions.availableOptions)
+            route("/available") {
+                get {
+                    ifAuthorized {
+                        call.respond(ManualStageOptions.availableOptions)
+                    }
+                }
+                get("/properties") {
+                    ifAuthorized {
+                        call.respond(ManualStageOptions.availableProperties)
+                    }
                 }
             }
 
-            get("/default") {
-                ifAuthorized {
-                    call.respond(default)
+            route("/default") {
+                get {
+                    ifAuthorized {
+                        call.respond(StageConfigs.default)
+                    }
+                }
+                get("/files") {
+                    ifAuthorized {
+                        call.respond(StageConfigs.defaultFiles)
+                    }
+                }
+                get("/properties") {
+                    ifAuthorized {
+                        call.respond(StageConfigs.defaultProperties)
+                    }
                 }
             }
         }

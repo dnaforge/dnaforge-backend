@@ -397,6 +397,76 @@ object ManualStageOptions {
             simulationTypeContainer
         )
     )
+
+    /**
+     * Set of all properties available for manual stage configuration.
+     */
+    val availableProperties: Set<SpecialProperty> = getAllProperties(availableOptions)
+
+    /**
+     * Recursively collects all Properties in the given [Option].
+     */
+    private fun getAllProperties(
+        option: Option,
+        set: MutableSet<SpecialProperty> = mutableSetOf()
+    ): MutableSet<SpecialProperty> {
+        option.entries.forEach {
+            when (it) {
+                is Property -> set.add(SpecialProperty(it.name, it.valueType))
+
+                is PropertyContainer -> {
+                    set.add(SpecialProperty(it.name, ValueType.ENUM, it.values.mapTo(mutableSetOf()) { it.name }))
+                    it.values.forEach { getAllProperties(it, set) }
+                }
+
+                is Option -> getAllProperties(it, set)
+            }
+        }
+
+        return set
+    }
+
+    fun selectedPropertiesToSelectedOption(set: Set<SelectedProperty>): SelectedOption {
+        val available = availableProperties.associateBy { it.name }
+        val unknownProperties = set.toMutableSet()
+        unknownProperties.removeIf { available[it.name] != null }
+        if (unknownProperties.isNotEmpty())
+            log.throwError(IllegalArgumentException("Unknown properties: $unknownProperties"))
+
+        val selectedOption =
+            buildSelectedOptionRecursively(set.associateByTo(mutableMapOf()) { it.name }, availableOptions)
+
+        if (selectedOption !is SelectedOption)
+            log.throwError(IllegalArgumentException("Expected to be able to build a SelectedOption."))
+
+        return selectedOption
+    }
+
+    private fun buildSelectedOptionRecursively(
+        propertiesLeft: MutableMap<String, SelectedProperty>,
+        level: Entry
+    ): SelectedEntry? = when (level) {
+        is Option -> {
+            val entries = level.entries.map { buildSelectedOptionRecursively(propertiesLeft, it) }
+            val cleanEntries = entries.mapNotNull { it }
+            if (entries.size != cleanEntries.size)
+                null
+            else
+                SelectedOption(level.name, cleanEntries)
+        }
+
+        is PropertyContainer -> {
+            val selectedOption = propertiesLeft.remove(level.name)
+                ?.run { level.values.firstOrNull { it.name == this.value } }
+                ?.run { buildSelectedOptionRecursively(propertiesLeft, this) }
+            if (selectedOption !is SelectedOption)
+                null
+            else
+                SelectedPropertyContainer(level.name, selectedOption)
+        }
+
+        is Property -> propertiesLeft.remove(level.name)
+    }
 }
 
 /**
@@ -534,20 +604,19 @@ data class SelectedProperty(
 
         // validate data type
         val valueWithSuffix = when (level.valueType) {
-            ValueType.BOOLEAN -> {
+            ValueType.BOOLEAN ->
                 value.toBooleanStrictOrNull()?.toString()
                     ?: ManualStageOptions.log.throwError(IllegalArgumentException("Expected boolean as value. Got $value."))
-            }
 
-            ValueType.UNSIGNED_INTEGER -> {
+            ValueType.UNSIGNED_INTEGER ->
                 value.toUIntOrNull()?.toString()
                     ?: ManualStageOptions.log.throwError(IllegalArgumentException("Expected unsigned integer as value. Got $value."))
-            }
 
-            ValueType.FLOAT -> {
+            ValueType.FLOAT ->
                 value.toFloatOrNull()?.toString()
                     ?: ManualStageOptions.log.throwError(IllegalArgumentException("Expected float as value. Got $value."))
-            }
+
+            ValueType.ENUM -> ManualStageOptions.log.throwError(IllegalArgumentException("Enums shouldn't exist here."))
         } + level.suffix
 
         // write value for all config names
@@ -564,5 +633,19 @@ data class SelectedProperty(
 enum class ValueType {
     BOOLEAN,
     UNSIGNED_INTEGER,
-    FLOAT
+    FLOAT,
+    ENUM
 }
+
+
+/**
+ * Used to represent all available properties.
+ * They are needed for [ValueType.ENUM] type properties that represent [Option]s in the usual representation.
+ */
+@Serializable
+@SerialName("Property")
+data class SpecialProperty(
+    val name: String,
+    val valueType: ValueType,
+    val possibleValues: Set<String>? = null
+)

@@ -3,7 +3,7 @@ package dnaforge.backend.web
 import dnaforge.backend.InternalAPI
 import dnaforge.backend.sim.JobState
 import dnaforge.backend.sim.Jobs
-import dnaforge.backend.sim.default
+import dnaforge.backend.sim.StageConfigs
 import io.ktor.client.plugins.websocket.*
 import io.ktor.client.request.*
 import io.ktor.http.*
@@ -40,7 +40,7 @@ class ReceiveUpdateTest {
             assertTrue(message.success)
 
             // submit job
-            val job0 = Jobs.submitNewJob(default, top, dat, forces)
+            val job0 = Jobs.submitNewJob(StageConfigs.default, top, dat, forces)
             frame = incoming.receive()
             assertIs<Frame.Text>(frame)
             message = frame.toMessage()
@@ -73,7 +73,7 @@ class ReceiveUpdateTest {
             assertTrue(message.success)
 
             // submit job
-            val job0 = Jobs.submitNewJob(default, top, dat, forces)
+            val job0 = Jobs.submitNewJob(StageConfigs.default, top, dat, forces)
             client.post("/job/subscribe/0") {
                 header(HttpHeaders.Authorization, bearerToken)
             }.apply {

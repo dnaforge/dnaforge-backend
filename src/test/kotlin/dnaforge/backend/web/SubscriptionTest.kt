@@ -2,7 +2,7 @@ package dnaforge.backend.web
 
 import dnaforge.backend.InternalAPI
 import dnaforge.backend.sim.Jobs
-import dnaforge.backend.sim.default
+import dnaforge.backend.sim.StageConfigs
 import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.http.*
@@ -74,7 +74,7 @@ class SubscriptionTest {
     fun `subscribing job and getting subscription works`() = testApplication {
         val (client, bearerToken) = prepareWithAuth()
 
-        Jobs.submitNewJob(default, top, dat, forces)
+        Jobs.submitNewJob(StageConfigs.default, top, dat, forces)
 
         client.post("/job/subscribe/0") {
             header(HttpHeaders.Authorization, bearerToken)
@@ -95,7 +95,7 @@ class SubscriptionTest {
     fun `unsubscribing job works`() = testApplication {
         val (client, bearerToken) = prepareWithAuth()
 
-        Jobs.submitNewJob(default, top, dat, forces)
+        Jobs.submitNewJob(StageConfigs.default, top, dat, forces)
 
         client.post("/job/subscribe/0") {
             header(HttpHeaders.Authorization, bearerToken)

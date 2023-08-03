@@ -1,7 +1,7 @@
 package dnaforge.backend.web
 
 import dnaforge.backend.sim.ManualStageOptions
-import dnaforge.backend.sim.default
+import dnaforge.backend.sim.StageConfigs
 import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.http.*
@@ -49,7 +49,7 @@ class OptionsTest {
             header(HttpHeaders.Authorization, bearerToken)
         }.apply {
             assertEquals(HttpStatusCode.OK, status)
-            assertEquals(default, body())
+            assertEquals(StageConfigs.default, body())
         }
     }
 }

@@ -3,7 +3,7 @@ package dnaforge.backend.web
 import dnaforge.backend.InternalAPI
 import dnaforge.backend.sim.Jobs
 import dnaforge.backend.sim.SimJob
-import dnaforge.backend.sim.default
+import dnaforge.backend.sim.StageConfigs
 import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.http.*
@@ -43,7 +43,7 @@ class GetJobsTest {
             assertEquals(0, jobs.size)
         }
 
-        val job0 = Jobs.submitNewJob(default, top, dat, forces)
+        val job0 = Jobs.submitNewJob(StageConfigs.default, top, dat, forces)
 
         client.get("/job") {
             header(HttpHeaders.Authorization, bearerToken)
@@ -54,7 +54,7 @@ class GetJobsTest {
             assertEquals(job0, jobs[0])
         }
 
-        val job1 = Jobs.submitNewJob(default, top, dat, forces)
+        val job1 = Jobs.submitNewJob(StageConfigs.default, top, dat, forces)
 
         client.get("/job") {
             header(HttpHeaders.Authorization, bearerToken)

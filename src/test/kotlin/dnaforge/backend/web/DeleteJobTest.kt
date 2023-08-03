@@ -2,7 +2,7 @@ package dnaforge.backend.web
 
 import dnaforge.backend.InternalAPI
 import dnaforge.backend.sim.Jobs
-import dnaforge.backend.sim.default
+import dnaforge.backend.sim.StageConfigs
 import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.server.testing.*
@@ -44,7 +44,7 @@ class DeleteJobTest {
     fun `deleting job works`() = testApplication {
         val (client, bearerToken) = prepareWithAuth()
 
-        Jobs.submitNewJob(default, top, dat, forces)
+        Jobs.submitNewJob(StageConfigs.default, top, dat, forces)
 
         client.delete("/job/0") {
             header(HttpHeaders.Authorization, bearerToken)
