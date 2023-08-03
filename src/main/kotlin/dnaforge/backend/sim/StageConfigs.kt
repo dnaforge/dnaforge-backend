@@ -197,18 +197,50 @@ data class FileConfig(
 ) : StageConfig() {
 
     override fun encodeToMap(): Map<String, String> = buildMap {
-        content.lineSequence()
-            .map { it.trim() } // ignore leading or trailing spaces
-            .filter { it.isNotBlank() && !it.startsWith('#') } // filter blank and comment lines
-            .mapNotNull { // split
-                val pos = it.indexOf('=')
-                if (pos == -1) null
-                else Pair(it.substring(0, pos).trimEnd(), it.substring(pos + 1).trimStart())
+        val interestingLines = content.lines()
+            .filter { it.isNotBlank() && !it.startsWith('#') } // ignore blank and comment lines
+
+        var blockStartLine: Int? = null
+        var blockStartIndex = 0
+        var blockKey = ""
+        var blockLevel = 0
+        for (i in interestingLines.indices) {
+            val line = interestingLines[i]
+
+            if (blockStartLine != null) { // in block: search for an end
+                val levelChange = countBrackets(line)
+                blockLevel += levelChange
+
+                if (blockLevel <= 0) { // found end
+                    val startLine = interestingLines[blockStartLine]
+                    val value = (startLine.substring(blockStartIndex + 1) +
+                            interestingLines.subList(blockStartLine + 1, i + 1).joinToString("\n")
+                            ).trim()
+                    this[blockKey] = value
+
+                    blockStartLine = null
+                }
+            } else { // not in block
+                val pos = line.indexOf('=')
+                if (pos == -1) continue
+                val key = line.substring(0, pos).trim()
+                val value = line.substring(pos + 1).trim()
+                val levelChange = countBrackets(value)
+
+                if (levelChange <= 0) {
+                    this[key] = value
+                } else { // block starts in this line
+                    blockStartLine = i
+                    blockStartIndex = pos
+                    blockKey = key
+                    blockLevel = levelChange
+                }
             }
-            .forEach { // add to map
-                this[it.first] = it.second
-            }
+        }
     }
+
+    private fun countBrackets(text: String): Int =
+        text.fold(0) { acc, c -> if (c == '{') acc + 1 else if (c == '}') acc - 1 else acc }
 }
 
 /**
