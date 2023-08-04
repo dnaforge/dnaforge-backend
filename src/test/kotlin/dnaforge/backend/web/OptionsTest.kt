@@ -33,6 +33,28 @@ class OptionsTest {
     }
 
     @Test
+    fun `getting available properties doesn't work without auth`() = testApplication {
+        val client = prepare()
+
+        client.get("/options/available/properties").apply {
+            assertEquals(HttpStatusCode.Unauthorized, status)
+        }
+    }
+
+    @Test
+    fun `getting available properties works`() = testApplication {
+        val (client, bearerToken) = prepareWithAuth()
+
+        client.get("/options/available/properties") {
+            header(HttpHeaders.Authorization, bearerToken)
+        }.apply {
+            assertEquals(HttpStatusCode.OK, status)
+            assertEquals(ManualStageOptions.availableProperties, body())
+        }
+    }
+
+
+    @Test
     fun `getting default options doesn't work without auth`() = testApplication {
         val client = prepare()
 
@@ -50,6 +72,48 @@ class OptionsTest {
         }.apply {
             assertEquals(HttpStatusCode.OK, status)
             assertEquals(StageConfigs.default, body())
+        }
+    }
+
+    @Test
+    fun `getting default files doesn't work without auth`() = testApplication {
+        val client = prepare()
+
+        client.get("/options/default/files").apply {
+            assertEquals(HttpStatusCode.Unauthorized, status)
+        }
+    }
+
+    @Test
+    fun `getting default files works`() = testApplication {
+        val (client, bearerToken) = prepareWithAuth()
+
+        client.get("/options/default/files") {
+            header(HttpHeaders.Authorization, bearerToken)
+        }.apply {
+            assertEquals(HttpStatusCode.OK, status)
+            assertEquals(StageConfigs.defaultFiles, body())
+        }
+    }
+
+    @Test
+    fun `getting default properties doesn't work without auth`() = testApplication {
+        val client = prepare()
+
+        client.get("/options/default/properties").apply {
+            assertEquals(HttpStatusCode.Unauthorized, status)
+        }
+    }
+
+    @Test
+    fun `getting default properties works`() = testApplication {
+        val (client, bearerToken) = prepareWithAuth()
+
+        client.get("/options/default/properties") {
+            header(HttpHeaders.Authorization, bearerToken)
+        }.apply {
+            assertEquals(HttpStatusCode.OK, status)
+            assertEquals(StageConfigs.defaultProperties, body())
         }
     }
 }
