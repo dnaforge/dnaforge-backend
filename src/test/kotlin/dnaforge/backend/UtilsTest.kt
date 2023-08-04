@@ -38,8 +38,18 @@ class UtilsTest {
     fun `error throwing works`() {
         val log = LoggerFactory.getLogger("TestLogger")
 
-        assertFails {
-            log.throwError(Throwable("Oh no, an error occurred!"))
+        val error = Throwable("Oh no, an error occurred!")
+
+        val error2 = assertFails {
+            log.throwError(error)
         }
+        assertEquals(error, error2)
+    }
+
+    @Test
+    fun `not throwing error works`() {
+        val log = LoggerFactory.getLogger("TestLogger")
+
+        log.error(Throwable("Oh no, an error occurred!"))
     }
 }
