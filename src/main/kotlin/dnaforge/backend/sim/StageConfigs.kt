@@ -57,7 +57,7 @@ object StageConfigs {
             is ManualConfig -> FileConfig(
                 it.metadata,
                 it.autoExtendStage,
-                it.getParameterMap().entries.joinToString("\n") { (key, value) -> "$key = $value" }
+                it.toPropertiesMap().entries.joinToString("\n") { (key, value) -> "$key = $value" }
             )
 
             is PropertiesConfig -> it
@@ -130,7 +130,7 @@ sealed class StageConfig {
      *
      * @return a new [Map] containing the properties of this [StageConfig] and some default values.
      */
-    fun getParameterMap(): Map<String, String> = buildMap {
+    fun toPropertiesMap(): Map<String, String> = buildMap {
         this.putAll(encodeToMap())
 
         // input
@@ -169,7 +169,7 @@ sealed class StageConfig {
      * @param file the file to write to. Existing content is overwritten.
      */
     fun toPropertiesFile(file: File) =
-        file.writeText(getParameterMap().entries.joinToString("\n") { (key, value) -> "$key = $value" })
+        file.writeText(toPropertiesMap().entries.joinToString("\n") { (key, value) -> "$key = $value" })
 
     companion object {
 

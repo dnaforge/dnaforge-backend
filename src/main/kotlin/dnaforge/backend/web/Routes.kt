@@ -144,7 +144,7 @@ fun Application.configureRoutes() {
                     val newJob: JobNew = call.receive()
 
                     // check that all configs are valid
-                    newJob.configs.forEach { it.getParameterMap() }
+                    newJob.configs.forEach { it.toPropertiesMap() }
 
                     val job = Jobs.submitNewJob(newJob.metadata, newJob.configs, newJob.top, newJob.dat, newJob.forces)
                     call.respond(job)

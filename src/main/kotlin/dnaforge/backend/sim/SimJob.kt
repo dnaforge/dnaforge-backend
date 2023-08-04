@@ -68,7 +68,7 @@ data class SimJob(
                 val stageDir = File(dir, i.toString())
                 val stageFile = File(stageDir, stageFileName)
                 val stageConfig = StageConfig.fromJsonFile(stageFile)
-                this.add(stageConfig.getParameterMap()["steps"]?.toUIntOrNull() ?: 0u)
+                this.add(stageConfig.toPropertiesMap()["steps"]?.toUIntOrNull() ?: 0u)
             }
         }
     }
