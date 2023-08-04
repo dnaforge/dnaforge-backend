@@ -121,6 +121,7 @@ object Clients {
 
     /**
      * Sends a detailed update to all [Client]s subscribed to the [SimJob] specified by the ID.
+     * Sends a normal update to all other Clients.
      *
      * @param job the [SimJob] that encountered an update.
      * @param dat the update data.
@@ -130,6 +131,10 @@ object Clients {
             jobIdSubscribedClient[job.id]?.forEach {
                 it.trySendMessage(DetailedUpdate(job, job.topFile.readText(), dat))
             }
+
+            // send normal updates to all other clients
+            tokenClientsMap.asSequence().map { it.value }.filter { clientSubscribedJobId[it] != job.id }
+                .forEach { it.trySendMessage(JobUpdate(job.id, job)) }
         }
 
         log.debug("A detailed update has been propagated to all clients subscribed to the job with ID {}", job.id)
@@ -144,13 +149,11 @@ object Clients {
     suspend fun propagateUpdate(jobId: UInt, job: SimJob?) {
         mutex.withLock {
             // remove subscriptions if the job is deleted
-            if (job == null) {
-                jobIdSubscribedClient[jobId]?.forEach { clientSubscribedJobId.remove(it) }
-                jobIdSubscribedClient.remove(jobId)
-            }
+            if (job == null)
+                jobIdSubscribedClient.remove(jobId)?.forEach { clientSubscribedJobId.remove(it) }
 
             // send update to clients
-            tokenClientsMap.values.forEach { it.trySendMessage(JobUpdate(jobId, job)) }
+            tokenClientsMap.asSequence().map { it.value }.forEach { it.trySendMessage(JobUpdate(jobId, job)) }
         }
 
         log.debug(

@@ -113,13 +113,6 @@ class ReceiveUpdateTest {
             frame = incoming.receive()
             assertIs<Frame.Text>(frame)
             message = frame.toMessage()
-            assertIs<JobUpdate>(message)
-            assertEquals(job0, message.job)
-            assertEquals(JobState.RUNNING, message.job?.status)
-
-            frame = incoming.receive()
-            assertIs<Frame.Text>(frame)
-            message = frame.toMessage()
             assertIs<DetailedUpdate>(message)
             assertEquals(job0, message.job)
             assertEquals(JobState.RUNNING, message.job.status)
