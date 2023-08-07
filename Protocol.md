@@ -235,7 +235,27 @@ The example above should produce a JSON list of jobs, e.g.:
     "stages": 4,
     "completedStages": 4,
     "status": "DONE",
-    "progress": 1.0,
+    "initialSimSteps": 1003100,
+    "simSteps": 1202200,
+    "progress": 1202200,
+    "initialStageSimSteps": [
+      2000,
+      100,
+      1000,
+      1000000
+    ],
+    "stageSimSteps": [
+      2000,
+      200,
+      200000,
+      1000000
+    ],
+    "stageProgress": [
+      2000,
+      100,
+      1000,
+      1000000
+    ],
     "extensions": 200,
     "error": null
   },
@@ -246,10 +266,30 @@ The example above should produce a JSON list of jobs, e.g.:
     },
     "id": 1,
     "stages": 4,
-    "completedStages": 3,
+    "completedStages": 2,
     "status": "RUNNING",
-    "progress": 0.0030904198,
-    "extensions": 200,
+    "initialSimSteps": 1003100,
+    "simSteps": 1004300,
+    "progress": 3100,
+    "initialStageSimSteps": [
+      2000,
+      100,
+      1000,
+      1000000
+    ],
+    "stageSimSteps": [
+      2000,
+      300,
+      2000,
+      1000000
+    ],
+    "stageProgress": [
+      2000,
+      100,
+      800,
+      0
+    ],
+    "extensions": 3,
     "error": null
   },
   {
@@ -261,7 +301,27 @@ The example above should produce a JSON list of jobs, e.g.:
     "stages": 4,
     "completedStages": 0,
     "status": "NEW",
-    "progress": 0.0,
+    "initialSimSteps": 1003100,
+    "simSteps": 1003100,
+    "progress": 0,
+    "initialStageSimSteps": [
+      2000,
+      100,
+      1000,
+      1000000
+    ],
+    "stageSimSteps": [
+      2000,
+      100,
+      1000,
+      1000000
+    ],
+    "stageProgress": [
+      0,
+      0,
+      0,
+      0
+    ],
     "extensions": 0,
     "error": null
   }
@@ -307,7 +367,27 @@ If a job with ID 0 exists:
   "stages": 4,
   "completedStages": 4,
   "status": "DONE",
-  "progress": 1.0,
+  "initialSimSteps": 1003100,
+  "simSteps": 1202200,
+  "progress": 1202200,
+  "initialStageSimSteps": [
+    2000,
+    100,
+    1000,
+    1000000
+  ],
+  "stageSimSteps": [
+    2000,
+    200,
+    200000,
+    1000000
+  ],
+  "stageProgress": [
+    2000,
+    100,
+    1000,
+    1000000
+  ],
   "extensions": 200,
   "error": null
 }
@@ -352,9 +432,29 @@ If a job with ID 0 exists:
     },
     "id": 0,
     "stages": 4,
-    "completedStages": 3,
-    "status": "RUNNING",
-    "progress": 0.67101985,
+    "completedStages": 4,
+    "status": "DONE",
+    "initialSimSteps": 1003100,
+    "simSteps": 1202200,
+    "progress": 1202200,
+    "initialStageSimSteps": [
+      2000,
+      100,
+      1000,
+      1000000
+    ],
+    "stageSimSteps": [
+      2000,
+      200,
+      200000,
+      1000000
+    ],
+    "stageProgress": [
+      2000,
+      100,
+      1000,
+      1000000
+    ],
     "extensions": 200,
     "error": null
   },
@@ -517,7 +617,7 @@ echo "$response"
 
 ```
 
-The example above should produce a new job, e.g.:
+The examples above should produce a new job, e.g.:
 
 ```json
 {
@@ -525,11 +625,31 @@ The example above should produce a new job, e.g.:
     "title": "Some Job",
     "description": "A very important Job"
   },
-  "id": 1,
+  "id": 0,
   "stages": 4,
   "completedStages": 0,
-  "status": "NEW",
-  "progress": 0.0,
+  "status": "RUNNING",
+  "initialSimSteps": 1003100,
+  "simSteps": 1003100,
+  "progress": 0,
+  "initialStageSimSteps": [
+    2000,
+    100,
+    1000,
+    1000000
+  ],
+  "stageSimSteps": [
+    2000,
+    100,
+    1000,
+    1000000
+  ],
+  "stageProgress": [
+    0,
+    0,
+    0,
+    0
+  ],
   "extensions": 0,
   "error": null
 }
@@ -743,8 +863,28 @@ Over time, updates such as the following should be received:
     "stages": 4,
     "completedStages": 2,
     "status": "RUNNING",
-    "progress": 0.0029907287,
-    "extensions": 95,
+    "initialSimSteps": 1003100,
+    "simSteps": 1076200,
+    "progress": 2300,
+    "initialStageSimSteps": [
+      2000,
+      100,
+      1000,
+      1000000
+    ],
+    "stageSimSteps": [
+      2000,
+      200,
+      74000,
+      1000000
+    ],
+    "stageProgress": [
+      2000,
+      100,
+      100,
+      0
+    ],
+    "extensions": 74,
     "error": null
   }
 }

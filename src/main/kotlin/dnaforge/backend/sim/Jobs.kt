@@ -2,7 +2,6 @@ package dnaforge.backend.sim
 
 import dnaforge.backend.Environment
 import dnaforge.backend.InternalAPI
-import dnaforge.backend.stageFileName
 import dnaforge.backend.web.Clients
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
@@ -94,28 +93,12 @@ object Jobs {
         val id = mutex.withLock {
             nextId++
         }
-        val job = SimJob(metadata, id, configs.size.toUInt())
-
-        // write files
-        job.toDisk()
-        job.topFile.writeText(top.replace("\r\n", "\n"))
-        job.startConfFile.writeText(dat.replace("\r\n", "\n"))
-        job.forcesFile.writeText(forces.replace("\r\n", "\n"))
-
-        for (indexedStage in configs.withIndex()) {
-            val i = indexedStage.index
-            val stage = indexedStage.value
-
-            val dir = File(job.dir, i.toString())
-            dir.mkdirs()
-            val stageFile = File(dir, stageFileName)
-            stage.toJsonFile(stageFile)
-        }
+        val job = SimJob(metadata, id, configs, top, dat, forces)
+        Clients.propagateUpdate(id, job)
 
         mutex.withLock {
-            queuedJobs[job.id] = job
+            queuedJobs[id] = job
             queue.send(job)
-            Clients.propagateUpdate(job.id, job)
         }
 
         log.info("New job with ID $id submitted.")

@@ -28,12 +28,18 @@ import kotlin.math.absoluteValue
 data class SimJob(
     val metadata: Map<String, String>,
     val id: UInt,
-    val stages: UInt
+    val stages: UInt,
+    @Transient val configs: List<StageConfig> = configsFromDisk(stages, id)
 ) {
     private var completedStages: UInt = 0u
     var status: JobState = JobState.NEW
         private set
-    private var progress: Float = 0.0f
+    private val initialSimSteps: UInt
+    private var simSteps: UInt
+    private var progress: UInt = 0u
+    private val initialStageSimSteps: List<UInt>
+    private val stageSimSteps: MutableList<UInt>
+    private val stageProgress: MutableList<UInt>
     private var extensions: UInt = 0u
     private var error: String? = null
 
@@ -48,7 +54,7 @@ data class SimJob(
     private var process: Process? = null
 
     @Transient
-    val dir = File(Environment.dataDir, id.toString())
+    val dir = baseDir(id)
 
     @Transient
     private val file = File(dir, jobFileName)
@@ -62,15 +68,47 @@ data class SimJob(
     @Transient
     val forcesFile = File(dir, forcesFileName)
 
-    private val simSteps: List<UInt> by lazy {
-        buildList {
+    /**
+     * Creates a new [SimJob] and writes all necessary files.
+     */
+    constructor(
+        metadata: Map<String, String>,
+        id: UInt,
+        configs: List<StageConfig>,
+        top: String,
+        dat: String,
+        forces: String
+    ) : this(metadata, id, configs.size.toUInt(), configs) {
+        // write files
+        toDisk()
+        topFile.writeText(top.replace("\r\n", "\n"))
+        startConfFile.writeText(dat.replace("\r\n", "\n"))
+        forcesFile.writeText(forces.replace("\r\n", "\n"))
+
+        for (indexedStage in configs.withIndex()) {
+            val i = indexedStage.index
+            val stage = indexedStage.value
+
+            val dir = File(dir, i.toString())
+            dir.mkdirs()
+            val stageFile = File(dir, stageFileName)
+            stage.toJsonFile(stageFile)
+        }
+    }
+
+    init {
+        stageSimSteps = ArrayList(stages.toInt())
+        stageProgress = ArrayList(stages.toInt())
+        initialStageSimSteps = buildList(stages.toInt()) {
             for (i in 0u..<stages) {
-                val stageDir = File(dir, i.toString())
-                val stageFile = File(stageDir, stageFileName)
-                val stageConfig = StageConfig.fromJsonFile(stageFile)
-                this.add(stageConfig.toPropertiesMap()["steps"]?.toUIntOrNull() ?: 0u)
+                val stageSteps = configs[i.toInt()].toPropertiesMap()["steps"]?.toUIntOrNull() ?: 0u
+                this.add(stageSteps)
+                stageSimSteps.add(stageSteps)
+                stageProgress.add(0u)
             }
         }
+        initialSimSteps = stageSimSteps.sum()
+        simSteps = initialSimSteps
     }
 
     /**
@@ -146,7 +184,7 @@ data class SimJob(
             }
         }
         if (cancel) return@withLock
-        unlockedToDisk()
+        toDisk()
         Clients.propagateUpdate(this.id, this)
 
         while (completedStages < stages) {
@@ -154,7 +192,7 @@ data class SimJob(
             if (cancelMutex.withLock { shouldStopExecution() }) break
 
             executeNextStage()
-            unlockedToDisk()
+            toDisk()
             Clients.propagateUpdate(this.id, this)
         }
 
@@ -163,7 +201,7 @@ data class SimJob(
             if (status != JobState.CANCELED)
                 status = JobState.DONE
         }
-        unlockedToDisk()
+        toDisk()
         Clients.propagateUpdate(this.id, this)
 
         log.info("Execution of the job with ID $id finished.")
@@ -232,6 +270,8 @@ data class SimJob(
         // values for automatic stage extension
         val stepStates = LinkedList<StepState>()
 
+        val stepsFromPreviousStages = stageSimSteps.subList(0, completedStages.toInt()).sum()
+
         // run oxDNA
         val pb = ProcessBuilder()
         pb.directory(currentDir)
@@ -267,9 +307,8 @@ data class SimJob(
                 if (stepStates.size > 5) // retain 5 states
                     stepStates.removeFirst()
 
-                val totalSimSteps = simSteps.sum()
-                val completedSimSteps = simSteps.subList(0, completedStages.toInt()).sum() + state.step
-                this@SimJob.progress = completedSimSteps.toFloat() / totalSimSteps.toFloat()
+                progress = stepsFromPreviousStages + state.step
+                stageProgress[completedStages.toInt()] = state.step
 
                 val currentConf = endConfFile.readText()
                 Clients.propagateDetailedUpdate(this@SimJob, currentConf)
@@ -288,18 +327,20 @@ data class SimJob(
 
         var success = exitCode == 0
 
-        // run extension only if previous run was successful, extensions are allowed,
+        // run extension only if the previous run was successful, extensions are allowed,
         // and there have been less than 200 so far
         if (success && autoExtendStage && extensions < 200u) {
             val potentialEnergyChange =
                 (stepStates.first.potentialEnergy - stepStates.last.potentialEnergy).absoluteValue
             val distinctStretchedBonds = stepStates.mapTo(HashSet()) { it.stretchedBonds }.size
-            if (// potential energy still changes a lot
+            if (// the potential energy still changes a lot
                 potentialEnergyChange > 0.01f
-                // number of stretched bonds is still changing
+                // the number of stretched bonds is still changing
                 || distinctStretchedBonds > 1
             ) {
                 extensions++
+                simSteps += initialStageSimSteps[completedStages.toInt()]
+                stageSimSteps[completedStages.toInt()] += initialStageSimSteps[completedStages.toInt()]
                 log.debug(
                     "Running extension {}. Potential Energy change: {}; Distinct Stretched Bonds: {}",
                     extensions, potentialEnergyChange, distinctStretchedBonds
@@ -375,20 +416,9 @@ data class SimJob(
      * Writes the current state of this [SimJob] to disk.
      */
     @OptIn(ExperimentalSerializationApi::class)
-    private fun unlockedToDisk() {
+    private fun toDisk() {
         dir.mkdirs()
         file.outputStream().use { prettyJson.encodeToStream(this, it) }
-    }
-
-    /**
-     * Writes the current state of this [SimJob] to disk.
-     */
-    suspend fun toDisk() {
-        mutex.withLock {
-            unlockedToDisk()
-        }
-
-        log.debug("Wrote the job with ID $id to disk.")
     }
 
     /**
@@ -404,6 +434,27 @@ data class SimJob(
 
     companion object {
         private val log = LoggerFactory.getLogger(SimJob::class.java)
+
+        /**
+         * Calculates the base directory for a [SimJob] with the given ID.
+         *
+         * @param id the ID of the [SimJob] whose base directory is to be calculated.
+         */
+        fun baseDir(id: UInt) = File(Environment.dataDir, id.toString())
+
+        /**
+         * Loads the stage configuration files from disk.
+         *
+         * @param stages the number of stages.
+         * @param id the ID of the [SimJob].
+         */
+        private fun configsFromDisk(stages: UInt, id: UInt): List<StageConfig> = buildList(stages.toInt()) {
+            for (i in 0u..<stages) {
+                val stageDir = File(baseDir(id), i.toString())
+                val stageFile = File(stageDir, stageFileName)
+                this.add(StageConfig.fromJsonFile(stageFile))
+            }
+        }
 
         /**
          * Reads a [SimJob] from the specified directory [File].
