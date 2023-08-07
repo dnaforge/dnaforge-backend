@@ -38,6 +38,11 @@ object Environment {
      */
     val port: Int
 
+    /**
+     * Indicates whether CUDA is available as a backend.
+     */
+    val cuda: Boolean
+
     init {
         // update log level
         val logLevel: String? = System.getenv("LOGLEVEL")
@@ -53,22 +58,23 @@ object Environment {
         val dataPath: String? = System.getenv("DATADIR")
         var accessToken: String? = System.getenv("ACCESSTOKEN")?.trim()
         if (accessToken?.isBlank() == true) accessToken = null
+        Environment.accessToken = accessToken
 
-        val port: Int = System.getenv("PORT")?.toIntOrNull() ?: 8080
-        val host: String = System.getenv("HOST") ?: "0.0.0.0"
+        port = System.getenv("PORT")?.toIntOrNull() ?: 8080
+        host = System.getenv("HOST") ?: "0.0.0.0"
+
+        cuda = System.getenv("CUDA")?.toBooleanStrictOrNull() ?: true
 
         // DATADIR mustn't be null
         if (dataPath == null)
             log.throwError(IllegalArgumentException("Missing data directory. Set environment variable \"DATADIR\""))
 
-        Environment.accessToken = accessToken
         dataDir = File(dataPath)
-        Environment.port = port
-        Environment.host = host
 
         log.info("AccessToken: \"${Environment.accessToken}\"")
         log.info("Data directory: \"$dataDir\"")
         log.info("Address: \"$host:$port\"")
+        log.info("CUDA support: $cuda")
 
         // create data dir if needed and check that it actually exists
         dataDir.mkdirs()

@@ -1,6 +1,10 @@
 services:
   dnaforge-backend:
-    build: .
+    build:
+      context: .
+      args:
+        # Set NO_CUDA to any non-blank value to build and run this application without CUDA support
+        NO_CUDA:
     image: lewimbes/dnaforge-backend
     container_name: dnaforge-backend
     runtime: nvidia

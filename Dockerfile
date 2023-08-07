@@ -1,8 +1,15 @@
+# Select the image based on the NO_CUDA variable and store it in IMAGE
+ARG NO_CUDA
+ARG IMAGE=${NO_CUDA:+ubuntu:22.04}
+ARG IMAGE=${IMAGE:-nvidia/cuda:12.2.0-devel-ubuntu22.04}
+
+
+
 # dnaforge-backend builder
-FROM gradle:8.2-jdk17-alpine  as builder
+FROM gradle:8.2-jdk17-alpine as builder
 
 ## Copy necessary data (see .dockerignore)
-COPY . /dnaforge-backend/
+COPY .. /dnaforge-backend/
 
 ## Compile Kotlin app
 RUN cd /dnaforge-backend/ \
@@ -10,8 +17,13 @@ RUN cd /dnaforge-backend/ \
 
 
 
-# Use NVIDIA CUDA base image
-FROM nvidia/cuda:12.2.0-devel-ubuntu22.04
+# Use image based on the NO_CUDA variable
+FROM $IMAGE
+ARG NO_CUDA
+
+# Indicate if CUDA is available
+ENV CUDA=${NO_CUDA:+false}
+ENV CUDA=${CUDA:-true}
 
 ## Install necessary dependencies
 ### doxygen, graphviz and libgsl-dev are not necessarily required
@@ -24,10 +36,14 @@ RUN apt-get update && apt-get install -y \
 ## Clone oxDNA
 RUN git clone https://github.com/lorenzo-rovigatti/oxDNA.git --branch v3.5.2
 
-# Build oxDNA using CMake with CUDA support
-RUN mkdir /oxDNA/build/ && cd /oxDNA/build/ \
-    && cmake -DCUDA=On .. \
-    && make -j$(nproc)
+# Build oxDNA using CMake
+RUN mkdir /oxDNA/build/ && cd /oxDNA/build/ && \
+    if [ "$CUDA" = "true" ]; then \
+        cmake -DCUDA=On .. ; \
+    else \
+        cmake .. ; \
+    fi && \
+    make -j$(nproc)
 
 ## Copy binaries to correct location
 RUN cp /oxDNA/build/bin/* /usr/bin/

@@ -41,6 +41,7 @@ tasks.test {
     environment("DATADIR", "./data")
     environment("ACCESSTOKEN", "TestToken")
     environment("PORT", 8080)
+    environment("CUDA", true)
     environment("LOGLEVEL", "ALL")
 }
 

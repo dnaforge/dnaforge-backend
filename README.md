@@ -3,8 +3,8 @@
 This repository provides relaxation and simulation capabilities for
 the [DNA Forge project](https://github.com/Ritkuli/dnaforge).  
 Under the hood, [oxDNA](https://github.com/lorenzo-rovigatti/oxDNA) is used to provide these features.  
-Communication with the DNA Forge frontend is via WebSockets.
-If you want to know more about the communication protocol you can have a look at [Protocol.md](Protocol.md).
+Communication with the DNA Forge frontend is via a REST-API and WebSockets.
+If you want to know more about the communication protocol, you can have a look at [Protocol.md](Protocol.md).
 
 ## Usage
 
@@ -13,6 +13,8 @@ container.
 Of course, it is also possible to run this project bare-metal.  
 The application uses some environment variables for configuration.
 See [compose.yaml](compose.yaml) for explanations.
+The `NO_CUDA` build variable is not needed when running bare-metal.
+Instead, `CUDA` can be set to `false` if needed.
 
 ### Containerized
 

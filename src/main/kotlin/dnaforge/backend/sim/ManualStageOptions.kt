@@ -1,5 +1,6 @@
 package dnaforge.backend.sim
 
+import dnaforge.backend.Environment
 import dnaforge.backend.throwError
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -554,8 +555,9 @@ data class SelectedOption(override val name: String, val entries: List<SelectedE
             backend.add(this["backend"])
         }
 
-        // only if all Options that include the backend property agree to use the CUDA, will the CUDA be used
-        if (backend.contains("CPU"))
+        // if CUDA support is not available, CUDA will not be used
+        // only if all options that include the backend property agree to use CUDA, CUDA will be used
+        if (!Environment.cuda || backend.contains("CPU"))
             this["backend"] = "CPU"
     }
 }
