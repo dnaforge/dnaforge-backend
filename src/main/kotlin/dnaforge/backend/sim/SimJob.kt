@@ -31,7 +31,8 @@ data class SimJob(
     val stages: UInt,
     @Transient val configs: List<StageConfig> = configsFromDisk(stages, id)
 ) {
-    private var completedStages: UInt = 0u
+    var completedStages: UInt = 0u
+        private set
     var status: JobState = JobState.NEW
         private set
     private val initialSimSteps: UInt
@@ -317,7 +318,10 @@ data class SimJob(
                 stageProgress[stageIndex] = stepsInCurrentStage
 
                 val currentConf = endConfFile.readText()
-                Clients.propagateDetailedUpdate(this@SimJob, currentConf)
+                if (currentConf.isBlank())
+                    log.debug("Read empty configuration file. Ignoring it.")
+                else
+                    Clients.propagateDetailedUpdate(this@SimJob, currentConf)
 
                 // read default observables line
                 try {
@@ -349,7 +353,7 @@ data class SimJob(
                 stageSimSteps[stageIndex] += initialStageSimSteps[stageIndex]
                 log.debug(
                     "Running extension {}. Potential Energy change: {}; Distinct Stretched Bonds: {}",
-                    extensions, potentialEnergyChange, distinctStretchedBonds
+                    extensions[stageIndex], potentialEnergyChange, distinctStretchedBonds
                 )
                 Clients.propagateUpdate(id, this)
                 prepareFilesForExtension(currentDir)
