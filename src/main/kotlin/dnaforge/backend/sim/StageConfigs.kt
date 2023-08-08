@@ -23,6 +23,7 @@ object StageConfigs {
                 "description" to "Relaxes the structure using a type of potential energy minimization."
             ),
             true,
+            20u,
             ManualStageOptions.min
         ),
         ManualConfig(
@@ -31,6 +32,7 @@ object StageConfigs {
                 "description" to "Relaxes the structure with a short Monte Carlo simulation."
             ),
             true,
+            20u,
             ManualStageOptions.mcRelax
         ),
         ManualConfig(
@@ -39,6 +41,7 @@ object StageConfigs {
                 "description" to "Relaxes the structure with a short molecular dynamics simulation with a very small ΔT."
             ),
             true,
+            20u,
             ManualStageOptions.mdRelax
         ),
         ManualConfig(
@@ -47,6 +50,7 @@ object StageConfigs {
                 "description" to "Simulates the relaxed structure with a molecular dynamics simulation."
             ),
             false,
+            0u,
             ManualStageOptions.mdSim
         )
     )
@@ -57,6 +61,7 @@ object StageConfigs {
             is ManualConfig -> FileConfig(
                 it.metadata,
                 it.autoExtendStage,
+                it.maxExtensions,
                 it.toPropertiesMap().entries.joinToString("\n") { (key, value) -> "$key = $value" }
             )
 
@@ -70,6 +75,7 @@ object StageConfigs {
             is ManualConfig -> PropertiesConfig(
                 it.metadata,
                 it.autoExtendStage,
+                it.maxExtensions,
                 getAllSelectedProperties(it.options)
             )
 
@@ -109,6 +115,7 @@ object StageConfigs {
 sealed class StageConfig {
     abstract val metadata: Map<String, String>
     abstract val autoExtendStage: Boolean
+    abstract val maxExtensions: UInt
 
     /**
      * Writes this [StageConfig] to the specified JSON [File].
@@ -193,6 +200,7 @@ sealed class StageConfig {
 data class FileConfig(
     override val metadata: Map<String, String>,
     override val autoExtendStage: Boolean,
+    override val maxExtensions: UInt,
     val content: String
 ) : StageConfig() {
 
@@ -252,6 +260,7 @@ data class FileConfig(
 data class ManualConfig(
     override val metadata: Map<String, String>,
     override val autoExtendStage: Boolean,
+    override val maxExtensions: UInt,
     val options: SelectedOption
 ) : StageConfig() {
 
@@ -267,6 +276,7 @@ data class ManualConfig(
 data class PropertiesConfig(
     override val metadata: Map<String, String>,
     override val autoExtendStage: Boolean,
+    override val maxExtensions: UInt,
     val properties: Set<SelectedProperty>
 ) : StageConfig() {
 

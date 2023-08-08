@@ -40,7 +40,7 @@ data class SimJob(
     private val initialStageSimSteps: List<UInt>
     private val stageSimSteps: MutableList<UInt>
     private val stageProgress: MutableList<UInt>
-    private var extensions: UInt = 0u
+    private val extensions: MutableList<UInt>
     private var error: String? = null
 
     @Transient
@@ -99,12 +99,14 @@ data class SimJob(
     init {
         stageSimSteps = ArrayList(stages.toInt())
         stageProgress = ArrayList(stages.toInt())
+        extensions = ArrayList(stages.toInt())
         initialStageSimSteps = buildList(stages.toInt()) {
             for (i in 0u..<stages) {
                 val stageSteps = configs[i.toInt()].toPropertiesMap()["steps"]?.toUIntOrNull() ?: 0u
                 this.add(stageSteps)
                 stageSimSteps.add(stageSteps)
                 stageProgress.add(0u)
+                extensions.add(0u)
             }
         }
         initialSimSteps = stageSimSteps.sum()
@@ -228,7 +230,7 @@ data class SimJob(
         // catch any exception that might occur
         val success = try {
             prepareFilesForNextStage(nextDir, stageConfig)
-            runSimulation(stageConfig.autoExtendStage, nextDir, nextLogFile, endConfFile)
+            runSimulation(stageConfig.autoExtendStage, stageConfig.maxExtensions, nextDir, nextLogFile, endConfFile)
         } catch (e: Throwable) {
             log.error(e)
             error = error ?: e.message ?: "Exception of type \"${e::class.qualifiedName}\""
@@ -263,14 +265,17 @@ data class SimJob(
      */
     private suspend fun runSimulation(
         autoExtendStage: Boolean,
+        maxExtensions: UInt,
         currentDir: File,
         currentLogFile: File,
         endConfFile: File
     ): Boolean {
+        val stageIndex = completedStages.toInt()
+
         // values for automatic stage extension
         val stepStates = LinkedList<StepState>()
 
-        val stepsFromPreviousStages = stageSimSteps.subList(0, completedStages.toInt()).sum()
+        val stepsFromPreviousStages = stageSimSteps.subList(0, stageIndex).sum()
 
         // run oxDNA
         val pb = ProcessBuilder()
@@ -307,8 +312,9 @@ data class SimJob(
                 if (stepStates.size > 5) // retain 5 states
                     stepStates.removeFirst()
 
-                progress = stepsFromPreviousStages + state.step
-                stageProgress[completedStages.toInt()] = state.step
+                val stepsInCurrentStage = initialStageSimSteps[stageIndex] * extensions[stageIndex] + state.step
+                progress = stepsFromPreviousStages + stepsInCurrentStage
+                stageProgress[stageIndex] = stepsInCurrentStage
 
                 val currentConf = endConfFile.readText()
                 Clients.propagateDetailedUpdate(this@SimJob, currentConf)
@@ -329,7 +335,7 @@ data class SimJob(
 
         // run extension only if the previous run was successful, extensions are allowed,
         // and there have been less than 200 so far
-        if (success && autoExtendStage && extensions < 200u) {
+        if (success && autoExtendStage && extensions[stageIndex] < maxExtensions) {
             val potentialEnergyChange =
                 (stepStates.first.potentialEnergy - stepStates.last.potentialEnergy).absoluteValue
             val distinctStretchedBonds = stepStates.mapTo(HashSet()) { it.stretchedBonds }.size
@@ -338,16 +344,16 @@ data class SimJob(
                 // the number of stretched bonds is still changing
                 || distinctStretchedBonds > 1
             ) {
-                extensions++
-                simSteps += initialStageSimSteps[completedStages.toInt()]
-                stageSimSteps[completedStages.toInt()] += initialStageSimSteps[completedStages.toInt()]
+                extensions[stageIndex]++
+                simSteps += initialStageSimSteps[stageIndex]
+                stageSimSteps[stageIndex] += initialStageSimSteps[stageIndex]
                 log.debug(
                     "Running extension {}. Potential Energy change: {}; Distinct Stretched Bonds: {}",
                     extensions, potentialEnergyChange, distinctStretchedBonds
                 )
                 Clients.propagateUpdate(id, this)
                 prepareFilesForExtension(currentDir)
-                success = runSimulation(true, currentDir, currentLogFile, endConfFile)
+                success = runSimulation(true, maxExtensions, currentDir, currentLogFile, endConfFile)
             }
         }
 
