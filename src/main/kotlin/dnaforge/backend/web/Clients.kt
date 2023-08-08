@@ -1,6 +1,8 @@
 package dnaforge.backend.web
 
 import dnaforge.backend.Environment
+import dnaforge.backend.endConfFileName
+import dnaforge.backend.sim.JobState
 import dnaforge.backend.sim.Jobs
 import dnaforge.backend.sim.SimJob
 import io.ktor.server.websocket.*
@@ -8,6 +10,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.slf4j.LoggerFactory
+import java.io.File
 import java.security.SecureRandom
 import java.time.Instant
 import java.time.temporal.ChronoUnit
@@ -109,11 +112,22 @@ object Clients {
         unsubscribe(client)
 
         mutex.withLock {
+            val job = Jobs.getJob(jobId) ?: return
+
             // add subscription
             jobIdSubscribedClient[jobId]?.add(client) ?: run {
                 jobIdSubscribedClient[jobId] = mutableListOf(client)
             }
             clientSubscribedJobId[client] = jobId
+
+            // send last state of non-running jobs
+            if (job.status != JobState.RUNNING) {
+                val dat = if (job.status == JobState.NEW)
+                    job.startConfFile
+                else // if (job.status == JobState.DONE || job.status == JobState.CANCELED)
+                    File(File(job.dir, (job.completedStages - 1u).toString()), endConfFileName)
+                client.trySendMessage(DetailedUpdate(job, job.topFile.readText(), dat.readText()))
+            }
         }
 
         log.debug("A client has subscribed to the job with ID {}", jobId)

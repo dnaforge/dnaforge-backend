@@ -97,6 +97,13 @@ class ReceiveUpdateTest {
             assertEquals(job0, message.job)
             assertEquals(JobState.NEW, message.job?.status)
 
+            frame = incoming.receive()
+            assertIs<Frame.Text>(frame)
+            message = frame.toMessage()
+            assertIs<DetailedUpdate>(message)
+            assertEquals(job0, message.job)
+            assertEquals(JobState.NEW, message.job.status)
+
             // manual execution as automatic execution is disabled
             val scope = CoroutineScope(newSingleThreadContext("TestJobExecutionContext"))
             scope.launch {
