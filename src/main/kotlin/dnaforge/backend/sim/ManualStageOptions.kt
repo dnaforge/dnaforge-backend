@@ -18,6 +18,10 @@ object ManualStageOptions {
 
     private const val MANUAL_CONFIG = "Manual Config"
 
+    private const val EXTERNAL_FORCES = "External Forces"
+    private const val TRUE = "True"
+    private const val FALSE = "False"
+
     private const val SIMULATION_TYPE = "Simulation Type"
     private const val POTENTIAL_ENERGY_MINIMIZATION = "Potential Energy Minimization"
     private const val MONTE_CARLO_SIMULATION = "Monte Carlo Simulation"
@@ -46,7 +50,6 @@ object ManualStageOptions {
     private const val MAX_BACKBONE_FORCE = "Max. Backbone Force"
     private const val MAX_BACKBONE_FORCE_FAR = "Max. Backbone Force Far"
     private const val VERLET_SKIN = "Verlet Skin"
-    private const val EXTERNAL_FORCES = "External Forces"
     private const val PRINT_INTERVAL = "Print Interval"
     private const val D_TRANSLATION = "ΔTranslation"
     private const val D_ROTATION = "ΔRotation"
@@ -71,7 +74,7 @@ object ManualStageOptions {
             SelectedProperty(MAX_BACKBONE_FORCE, "5.0"),
             SelectedProperty(MAX_BACKBONE_FORCE_FAR, "10.0"),
             SelectedProperty(VERLET_SKIN, "0.15"),
-            SelectedProperty(EXTERNAL_FORCES, "true"),
+            SelectedPropertyContainer(EXTERNAL_FORCES, SelectedOption(TRUE, listOf())),
             SelectedProperty(PRINT_INTERVAL, "100"),
             SelectedPropertyContainer(
                 SIMULATION_TYPE,
@@ -93,7 +96,7 @@ object ManualStageOptions {
             SelectedProperty(MAX_BACKBONE_FORCE, "5.0"),
             SelectedProperty(MAX_BACKBONE_FORCE_FAR, "10.0"),
             SelectedProperty(VERLET_SKIN, "0.5"),
-            SelectedProperty(EXTERNAL_FORCES, "true"),
+            SelectedPropertyContainer(EXTERNAL_FORCES, SelectedOption(TRUE, listOf())),
             SelectedProperty(PRINT_INTERVAL, "10"),
             SelectedPropertyContainer(
                 SIMULATION_TYPE,
@@ -154,7 +157,7 @@ object ManualStageOptions {
             SelectedProperty(MAX_BACKBONE_FORCE, "5.0"),
             SelectedProperty(MAX_BACKBONE_FORCE_FAR, "10.0"),
             SelectedProperty(VERLET_SKIN, "0.5"),
-            SelectedProperty(EXTERNAL_FORCES, "true"),
+            SelectedPropertyContainer(EXTERNAL_FORCES, SelectedOption(TRUE, listOf())),
             SelectedProperty(PRINT_INTERVAL, "100"),
             SelectedPropertyContainer(
                 SIMULATION_TYPE,
@@ -207,7 +210,7 @@ object ManualStageOptions {
             SelectedProperty(MAX_BACKBONE_FORCE, "5.0"),
             SelectedProperty(MAX_BACKBONE_FORCE_FAR, "10.0"),
             SelectedProperty(VERLET_SKIN, "0.05"),
-            SelectedProperty(EXTERNAL_FORCES, "false"),
+            SelectedPropertyContainer(EXTERNAL_FORCES, SelectedOption(FALSE, listOf())),
             SelectedProperty(PRINT_INTERVAL, "10000"),
             SelectedPropertyContainer(
                 SIMULATION_TYPE,
@@ -393,7 +396,14 @@ object ManualStageOptions {
             Property(MAX_BACKBONE_FORCE, ValueType.FLOAT, listOf("max_backbone_force")),
             Property(MAX_BACKBONE_FORCE_FAR, ValueType.FLOAT, listOf("max_backbone_force_far")),
             Property(VERLET_SKIN, ValueType.FLOAT, listOf("verlet_skin")),
-            Property(EXTERNAL_FORCES, ValueType.BOOLEAN, listOf("external_forces")),
+            // The checkbox in the frontend looks very different from the other input fields. So let's avoid it.
+            PropertyContainer(
+                EXTERNAL_FORCES,
+                listOf(
+                    Option(TRUE, mapOf("external_forces" to "true"), listOf()),
+                    Option(FALSE, mapOf("external_forces" to "false"), listOf())
+                )
+            ),
             Property(PRINT_INTERVAL, ValueType.UNSIGNED_INTEGER, listOf("print_conf_interval", "print_energy_every")),
             simulationTypeContainer
         )
@@ -402,21 +412,21 @@ object ManualStageOptions {
     /**
      * Set of all properties available for manual stage configuration.
      */
-    val availableProperties: Set<SpecialProperty> = getAllProperties(availableOptions)
+    val availableProperties: Set<SimpleListProperty> = getAllProperties(availableOptions)
 
     /**
      * Recursively collects all Properties in the given [Option].
      */
     private fun getAllProperties(
         option: Option,
-        set: MutableSet<SpecialProperty> = mutableSetOf()
-    ): MutableSet<SpecialProperty> {
+        set: MutableSet<SimpleListProperty> = mutableSetOf()
+    ): MutableSet<SimpleListProperty> {
         option.entries.forEach {
             when (it) {
-                is Property -> set.add(SpecialProperty(it.name, it.valueType))
+                is Property -> set.add(SimpleListProperty(it.name, it.valueType))
 
                 is PropertyContainer -> {
-                    set.add(SpecialProperty(it.name, ValueType.ENUM, it.values.mapTo(mutableSetOf()) { it.name }))
+                    set.add(SimpleListProperty(it.name, ValueType.ENUM, it.values.mapTo(mutableSetOf()) { it.name }))
                     it.values.forEach { getAllProperties(it, set) }
                 }
 
@@ -427,15 +437,14 @@ object ManualStageOptions {
         return set
     }
 
-    fun selectedPropertiesToSelectedOption(set: Set<SelectedProperty>): SelectedOption {
+    fun simpleListPropertiesToSelectedOption(set: Set<SimpleListProperty>): SelectedOption {
         val available = availableProperties.associateBy { it.name }
-        val unknownProperties = set.toMutableSet()
-        unknownProperties.removeIf { available[it.name] != null }
-        if (unknownProperties.isNotEmpty())
-            log.throwError(IllegalArgumentException("Unknown properties: $unknownProperties"))
+        val properties = set.filterTo(mutableSetOf()) { !it.value.isNullOrBlank() }
+        if (properties.any { available[it.name] == null })
+            log.throwError(IllegalArgumentException("Unknown properties: ${properties.retainAll { available[it.name] == null }}"))
 
         val selectedOption =
-            buildSelectedOptionRecursively(set.associateByTo(mutableMapOf()) { it.name }, availableOptions)
+            buildSelectedOptionRecursively(properties.associateByTo(mutableMapOf()) { it.name }, availableOptions)
 
         if (selectedOption !is SelectedOption)
             log.throwError(IllegalArgumentException("Expected to be able to build a SelectedOption."))
@@ -444,7 +453,7 @@ object ManualStageOptions {
     }
 
     private fun buildSelectedOptionRecursively(
-        propertiesLeft: MutableMap<String, SelectedProperty>,
+        propertiesLeft: MutableMap<String, SimpleListProperty>,
         level: Entry
     ): SelectedEntry? = when (level) {
         is Option -> {
@@ -466,7 +475,13 @@ object ManualStageOptions {
                 SelectedPropertyContainer(level.name, selectedOption)
         }
 
-        is Property -> propertiesLeft.remove(level.name)
+        is Property -> {
+            val prop = propertiesLeft.remove(level.name)
+            if (prop?.value == null)
+                null
+            else
+                SelectedProperty(prop.name, prop.value)
+        }
     }
 }
 
@@ -606,10 +621,6 @@ data class SelectedProperty(
 
         // validate data type
         val valueWithSuffix = when (level.valueType) {
-            ValueType.BOOLEAN ->
-                value.toBooleanStrictOrNull()?.toString()
-                    ?: ManualStageOptions.log.throwError(IllegalArgumentException("Expected boolean as value. Got $value."))
-
             ValueType.UNSIGNED_INTEGER ->
                 value.toUIntOrNull()?.toString()
                     ?: ManualStageOptions.log.throwError(IllegalArgumentException("Expected unsigned integer as value. Got $value."))
@@ -633,7 +644,6 @@ data class SelectedProperty(
  * Specifies the type of value expected.
  */
 enum class ValueType {
-    BOOLEAN,
     UNSIGNED_INTEGER,
     FLOAT,
     ENUM
@@ -646,8 +656,9 @@ enum class ValueType {
  */
 @Serializable
 @SerialName("Property")
-data class SpecialProperty(
+data class SimpleListProperty(
     val name: String,
     val valueType: ValueType,
-    val possibleValues: Set<String>? = null
+    val possibleValues: Set<String>? = null,
+    val value: String? = null
 )

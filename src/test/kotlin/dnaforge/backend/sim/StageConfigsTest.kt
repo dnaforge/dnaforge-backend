@@ -38,4 +38,12 @@ class StageConfigsTest {
             assertEquals(it.first.toPropertiesMap(), it.second.toPropertiesMap())
         }
     }
+
+    @Test
+    fun `default properties contain all available properties`() {
+        StageConfigs.defaultProperties.forEach {
+            assertIs<PropertiesConfig>(it)
+            assertEquals(ManualStageOptions.availableProperties.map { it.name }, it.properties.map { it.name })
+        }
+    }
 }

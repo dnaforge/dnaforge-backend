@@ -58,6 +58,7 @@ object StageConfigs {
     val defaultFiles: List<StageConfig> = default.map {
         when (it) {
             is FileConfig -> it
+
             is ManualConfig -> FileConfig(
                 it.metadata,
                 it.autoExtendStage,
@@ -72,34 +73,51 @@ object StageConfigs {
     val defaultProperties: List<StageConfig> = default.map {
         when (it) {
             is FileConfig -> log.throwError(IllegalArgumentException("FileConfigs cannot currently be converted to PropertiesConfigs."))
+
             is ManualConfig -> PropertiesConfig(
                 it.metadata,
                 it.autoExtendStage,
                 it.maxExtensions,
-                getAllSelectedProperties(it.options)
+                enhanceSimpleListProperties(getSelectedPropertiesAsSimpleListProperties(it.options))
             )
 
-            is PropertiesConfig -> it
+            is PropertiesConfig -> PropertiesConfig(
+                it.metadata,
+                it.autoExtendStage,
+                it.maxExtensions,
+                enhanceSimpleListProperties(it.properties)
+            )
         }
+    }
+
+    /**
+     * Makes sure that every available property also appears in the default properties.
+     */
+    private fun enhanceSimpleListProperties(properties: Set<SimpleListProperty>): Set<SimpleListProperty> {
+        val map = properties.associateBy { it.name }
+        return ManualStageOptions.availableProperties.mapTo(mutableSetOf()) { map[it.name] ?: it }
     }
 
     /**
      * Recursively collects all selected Properties in the given [SelectedOption].
      */
-    private fun getAllSelectedProperties(
+    private fun getSelectedPropertiesAsSimpleListProperties(
         option: SelectedOption,
-        set: MutableSet<SelectedProperty> = mutableSetOf()
-    ): MutableSet<SelectedProperty> {
-        option.entries.forEach {
-            when (it) {
-                is SelectedProperty -> set.add(it)
+        set: MutableSet<SimpleListProperty> = mutableSetOf()
+    ): MutableSet<SimpleListProperty> {
+        option.entries.forEach { entry ->
+            val related = ManualStageOptions.availableProperties.firstOrNull { it.name == entry.name } ?: return set
+
+            when (entry) {
+                is SelectedProperty ->
+                    set.add(SimpleListProperty(entry.name, related.valueType, related.possibleValues, entry.value))
 
                 is SelectedPropertyContainer -> {
-                    set.add(SelectedProperty(it.name, it.value.name))
-                    getAllSelectedProperties(it.value, set)
+                    set.add(SimpleListProperty(entry.name, related.valueType, related.possibleValues, entry.value.name))
+                    getSelectedPropertiesAsSimpleListProperties(entry.value, set)
                 }
 
-                is SelectedOption -> getAllSelectedProperties(it, set)
+                is SelectedOption -> getSelectedPropertiesAsSimpleListProperties(entry, set)
             }
         }
 
@@ -277,9 +295,9 @@ data class PropertiesConfig(
     override val metadata: Map<String, String>,
     override val autoExtendStage: Boolean,
     override val maxExtensions: UInt,
-    val properties: Set<SelectedProperty>
+    val properties: Set<SimpleListProperty>
 ) : StageConfig() {
 
     override fun encodeToMap(): Map<String, String> =
-        ManualStageOptions.selectedPropertiesToSelectedOption(properties).encodeToMap()
+        ManualStageOptions.simpleListPropertiesToSelectedOption(properties).encodeToMap()
 }
