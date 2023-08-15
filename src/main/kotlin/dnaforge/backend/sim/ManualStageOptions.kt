@@ -18,10 +18,6 @@ object ManualStageOptions {
 
     private const val MANUAL_CONFIG = "Manual Config"
 
-    private const val EXTERNAL_FORCES = "External Forces"
-    private const val TRUE = "True"
-    private const val FALSE = "False"
-
     private const val SIMULATION_TYPE = "Simulation Type"
     private const val POTENTIAL_ENERGY_MINIMIZATION = "Potential Energy Minimization"
     private const val MONTE_CARLO_SIMULATION = "Monte Carlo Simulation"
@@ -50,6 +46,7 @@ object ManualStageOptions {
     private const val MAX_BACKBONE_FORCE = "Max. Backbone Force"
     private const val MAX_BACKBONE_FORCE_FAR = "Max. Backbone Force Far"
     private const val VERLET_SKIN = "Verlet Skin"
+    private const val EXTERNAL_FORCES = "External Forces"
     private const val PRINT_INTERVAL = "Print Interval"
     private const val D_TRANSLATION = "ΔTranslation"
     private const val D_ROTATION = "ΔRotation"
@@ -74,7 +71,7 @@ object ManualStageOptions {
             SelectedProperty(MAX_BACKBONE_FORCE, "5.0"),
             SelectedProperty(MAX_BACKBONE_FORCE_FAR, "10.0"),
             SelectedProperty(VERLET_SKIN, "0.15"),
-            SelectedPropertyContainer(EXTERNAL_FORCES, SelectedOption(TRUE, listOf())),
+            SelectedProperty(EXTERNAL_FORCES, "true"),
             SelectedProperty(PRINT_INTERVAL, "100"),
             SelectedPropertyContainer(
                 SIMULATION_TYPE,
@@ -96,7 +93,7 @@ object ManualStageOptions {
             SelectedProperty(MAX_BACKBONE_FORCE, "5.0"),
             SelectedProperty(MAX_BACKBONE_FORCE_FAR, "10.0"),
             SelectedProperty(VERLET_SKIN, "0.5"),
-            SelectedPropertyContainer(EXTERNAL_FORCES, SelectedOption(TRUE, listOf())),
+            SelectedProperty(EXTERNAL_FORCES, "true"),
             SelectedProperty(PRINT_INTERVAL, "10"),
             SelectedPropertyContainer(
                 SIMULATION_TYPE,
@@ -157,7 +154,7 @@ object ManualStageOptions {
             SelectedProperty(MAX_BACKBONE_FORCE, "5.0"),
             SelectedProperty(MAX_BACKBONE_FORCE_FAR, "10.0"),
             SelectedProperty(VERLET_SKIN, "0.5"),
-            SelectedPropertyContainer(EXTERNAL_FORCES, SelectedOption(TRUE, listOf())),
+            SelectedProperty(EXTERNAL_FORCES, "true"),
             SelectedProperty(PRINT_INTERVAL, "100"),
             SelectedPropertyContainer(
                 SIMULATION_TYPE,
@@ -210,7 +207,7 @@ object ManualStageOptions {
             SelectedProperty(MAX_BACKBONE_FORCE, "5.0"),
             SelectedProperty(MAX_BACKBONE_FORCE_FAR, "10.0"),
             SelectedProperty(VERLET_SKIN, "0.05"),
-            SelectedPropertyContainer(EXTERNAL_FORCES, SelectedOption(FALSE, listOf())),
+            SelectedProperty(EXTERNAL_FORCES, "false"),
             SelectedProperty(PRINT_INTERVAL, "10000"),
             SelectedPropertyContainer(
                 SIMULATION_TYPE,
@@ -396,14 +393,7 @@ object ManualStageOptions {
             Property(MAX_BACKBONE_FORCE, ValueType.FLOAT, listOf("max_backbone_force")),
             Property(MAX_BACKBONE_FORCE_FAR, ValueType.FLOAT, listOf("max_backbone_force_far")),
             Property(VERLET_SKIN, ValueType.FLOAT, listOf("verlet_skin")),
-            // The checkbox in the frontend looks very different from the other input fields. So let's avoid it.
-            PropertyContainer(
-                EXTERNAL_FORCES,
-                listOf(
-                    Option(TRUE, mapOf("external_forces" to "true"), listOf()),
-                    Option(FALSE, mapOf("external_forces" to "false"), listOf())
-                )
-            ),
+            Property(EXTERNAL_FORCES, ValueType.BOOLEAN, listOf("external_forces")),
             Property(PRINT_INTERVAL, ValueType.UNSIGNED_INTEGER, listOf("print_conf_interval", "print_energy_every")),
             simulationTypeContainer
         )
@@ -621,6 +611,10 @@ data class SelectedProperty(
 
         // validate data type
         val valueWithSuffix = when (level.valueType) {
+            ValueType.BOOLEAN ->
+                value.toBooleanStrictOrNull()?.toString()
+                    ?: ManualStageOptions.log.throwError(IllegalArgumentException("Expected boolean as value. Got $value."))
+
             ValueType.UNSIGNED_INTEGER ->
                 value.toUIntOrNull()?.toString()
                     ?: ManualStageOptions.log.throwError(IllegalArgumentException("Expected unsigned integer as value. Got $value."))
@@ -644,6 +638,7 @@ data class SelectedProperty(
  * Specifies the type of value expected.
  */
 enum class ValueType {
+    BOOLEAN,
     UNSIGNED_INTEGER,
     FLOAT,
     ENUM
