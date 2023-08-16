@@ -299,35 +299,35 @@ data class SimJob(
 
         // we use the fact that the print interval of the trajectory and energy are the same to push detailed updates to clients
         withContext(Dispatchers.IO) {
-            var line: String?
+            var line: String
             while (true) {
                 // read custom observables line
                 line = try {
-                    energyStream?.readLine()
+                    energyStream?.readLine() ?: break
                 } catch (e: IOException) {
-                    null
+                    break
                 }
-                if (line == null) break
+
                 val state = StepState.fromObservableLine(line)
                 stepStates.add(state)
                 if (stepStates.size > 5) // retain 5 states
                     stepStates.removeFirst()
 
                 val stepsInCurrentStage = initialStageSimSteps[stageIndex] * extensions[stageIndex] + state.step
-                progress = stepsFromPreviousStages + stepsInCurrentStage
-                stageProgress[stageIndex] = stepsInCurrentStage
-
-                val currentConf = endConfFile.readText()
-                if (currentConf.isBlank())
-                    log.debug("Read empty configuration file. Ignoring it.")
-                else
-                    Clients.propagateDetailedUpdate(this@SimJob, currentConf)
+                updateProgress(stepsFromPreviousStages, stepsInCurrentStage, stageIndex, endConfFile)
 
                 // read default observables line
                 try {
                     energyStream?.readLine()
                 } catch (_: IOException) {
                 }
+            }
+        }
+        // make sure that the progress of the current stage is 100%,
+        // even if the print interval doesn't fit the number of steps
+        cancelMutex.withLock {
+            if (status != JobState.CANCELED) {
+                updateProgress(stepsFromPreviousStages, stageSimSteps[stageIndex], stageIndex, endConfFile)
             }
         }
 
@@ -362,6 +362,29 @@ data class SimJob(
         }
 
         return success
+    }
+
+    /**
+     * Updates the progress of this [SimJob] and propagates a detailed update.
+     *
+     * @param stepsFromPreviousStages the steps completed in previous stages.
+     * @param stepsInCurrentStage the steps completed in the current stage.
+     * @param stageIndex the index of the current stage.
+     * @endConfFile the endConf [File] of the current stage.
+     */
+    private suspend fun updateProgress(
+        stepsFromPreviousStages: UInt,
+        stepsInCurrentStage: UInt,
+        stageIndex: Int,
+        endConfFile: File
+    ) {
+        progress = stepsFromPreviousStages + stepsInCurrentStage
+        stageProgress[stageIndex] = stepsInCurrentStage
+        val currentConf = endConfFile.readText()
+        if (currentConf.isBlank())
+            log.debug("Read empty configuration file. Ignoring it.")
+        else
+            Clients.propagateDetailedUpdate(this@SimJob, currentConf)
     }
 
     /**

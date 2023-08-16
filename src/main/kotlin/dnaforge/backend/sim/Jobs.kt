@@ -131,22 +131,18 @@ object Jobs {
      */
     suspend fun deleteJob(jobId: UInt) {
         mutex.withLock {
-            if (queuedJobs.containsKey(jobId)) {
+            val job = if (queuedJobs.containsKey(jobId)) {
                 val job = queuedJobs[jobId] ?: return@withLock
-
                 job.cancel()
                 queuedJobs.remove(jobId)
-                job.deleteFiles()
-
-                Clients.propagateUpdate(job.id, null)
+                job
             } else {
                 val job = finishedJobs[jobId] ?: return@withLock
-
                 finishedJobs.remove(jobId)
-                job.deleteFiles()
-
-                Clients.propagateUpdate(job.id, null)
+                job
             }
+            job.deleteFiles()
+            Clients.propagateUpdate(job.id, null)
         }
 
         log.info("Job with ID $jobId deleted.")
