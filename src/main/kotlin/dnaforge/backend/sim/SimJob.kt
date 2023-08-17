@@ -239,7 +239,8 @@ data class SimJob(
         }
 
         if (success) {
-            completedStages++
+            if (status != JobState.CANCELED)
+                completedStages++
         } else {
             error = error ?: nextLogFile.useLines {
                 it.firstOrNull { line -> line.startsWith("ERROR:") }?.substring("ERROR: ".length)
