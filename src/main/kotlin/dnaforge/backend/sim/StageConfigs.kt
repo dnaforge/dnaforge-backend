@@ -23,6 +23,7 @@ object StageConfigs {
                 "description" to "Relaxes the structure using a type of potential energy minimization."
             ),
             true,
+            true,
             20u,
             ManualStageOptions.min
         ),
@@ -31,6 +32,7 @@ object StageConfigs {
                 "title" to "Second Relaxation Stage",
                 "description" to "Relaxes the structure with a short Monte Carlo simulation."
             ),
+            true,
             true,
             20u,
             ManualStageOptions.mcRelax
@@ -41,6 +43,7 @@ object StageConfigs {
                 "description" to "Relaxes the structure with a short molecular dynamics simulation with a very small ΔT."
             ),
             true,
+            true,
             20u,
             ManualStageOptions.mdRelax
         ),
@@ -49,6 +52,7 @@ object StageConfigs {
                 "title" to "Simulation Stage",
                 "description" to "Simulates the relaxed structure with a molecular dynamics simulation."
             ),
+            true,
             false,
             0u,
             ManualStageOptions.mdSim
@@ -61,6 +65,7 @@ object StageConfigs {
 
             is ManualConfig -> FileConfig(
                 it.metadata,
+                it.createTrajectory,
                 it.autoExtendStage,
                 it.maxExtensions,
                 it.toPropertiesMap().entries.joinToString("\n") { (key, value) -> "$key = $value" }
@@ -76,6 +81,7 @@ object StageConfigs {
 
             is ManualConfig -> PropertiesConfig(
                 it.metadata,
+                it.createTrajectory,
                 it.autoExtendStage,
                 it.maxExtensions,
                 enhanceSimpleListProperties(getSelectedPropertiesAsSimpleListProperties(it.options))
@@ -83,6 +89,7 @@ object StageConfigs {
 
             is PropertiesConfig -> PropertiesConfig(
                 it.metadata,
+                it.createTrajectory,
                 it.autoExtendStage,
                 it.maxExtensions,
                 enhanceSimpleListProperties(it.properties)
@@ -132,6 +139,7 @@ object StageConfigs {
 @Serializable
 sealed class StageConfig {
     abstract val metadata: Map<String, String>
+    abstract val createTrajectory: Boolean
     abstract val autoExtendStage: Boolean
     abstract val maxExtensions: UInt
 
@@ -166,7 +174,7 @@ sealed class StageConfig {
 
         // output
         this["lastconf_file"] = endConfFileName
-        this["trajectory_file"] = trajectoryFileName
+        this["trajectory_file"] = if (createTrajectory) trajectoryFileName else "/dev/null"
         this["energy_file"] = energyFileName
         this["max_io"] = "100.0"
         this["data_output_1"] = """{
@@ -217,6 +225,7 @@ sealed class StageConfig {
 @SerialName("FileConfig")
 data class FileConfig(
     override val metadata: Map<String, String>,
+    override val createTrajectory: Boolean,
     override val autoExtendStage: Boolean,
     override val maxExtensions: UInt,
     val content: String
@@ -277,6 +286,7 @@ data class FileConfig(
 @SerialName("ManualConfig")
 data class ManualConfig(
     override val metadata: Map<String, String>,
+    override val createTrajectory: Boolean,
     override val autoExtendStage: Boolean,
     override val maxExtensions: UInt,
     val options: SelectedOption
@@ -293,6 +303,7 @@ data class ManualConfig(
 @SerialName("PropertiesConfig")
 data class PropertiesConfig(
     override val metadata: Map<String, String>,
+    override val createTrajectory: Boolean,
     override val autoExtendStage: Boolean,
     override val maxExtensions: UInt,
     val properties: Set<SimpleListProperty>
