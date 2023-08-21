@@ -4,6 +4,7 @@ import dnaforge.backend.Environment
 import dnaforge.backend.throwError
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -28,7 +29,7 @@ object ManualStageOptions {
     private const val V1 = "v1"
     private const val V2 = "v2"
 
-    private const val NUCLEI_ACID = "Nuclei Acid"
+    private const val NUCLEIC_ACID = "Nucleic Acid"
     private const val DNA = "DNA"
     private const val RNA = "RNA"
 
@@ -52,7 +53,7 @@ object ManualStageOptions {
     private const val D_ROTATION = "ΔRotation"
     private const val RELAX_STRENGTH = "Relax Strength"
     private const val NEWTONIAN_STEPS = "Newtonian Steps"
-    private const val PARTICLE_MOMENTUM_REFRESH_PROBABILITY = "Particle-Momentum-Refresh-Probability"
+    private const val PARTICLE_MOMENTUM_REFRESH_PROBABILITY = "Momentum-Refresh-Probability"
     private const val BASE_DIFFUSION_COEFFICIENT = "Base Diffusion Coefficient"
 
 
@@ -73,7 +74,7 @@ object ManualStageOptions {
             SelectedProperty(VERLET_SKIN, "0.15"),
             SelectedProperty(EXTERNAL_FORCES, "true"),
             SelectedProperty(PRINT_INTERVAL, "100"),
-            SelectedPropertyContainer(
+            SelectedOptionContainer(
                 SIMULATION_TYPE,
                 SelectedOption(
                     POTENTIAL_ENERGY_MINIMIZATION, listOf()
@@ -95,7 +96,7 @@ object ManualStageOptions {
             SelectedProperty(VERLET_SKIN, "0.5"),
             SelectedProperty(EXTERNAL_FORCES, "true"),
             SelectedProperty(PRINT_INTERVAL, "10"),
-            SelectedPropertyContainer(
+            SelectedOptionContainer(
                 SIMULATION_TYPE,
                 SelectedOption(
                     MONTE_CARLO_SIMULATION, listOf(
@@ -107,7 +108,7 @@ object ManualStageOptions {
                             D_ROTATION,
                             "0.1"
                         ),
-                        SelectedPropertyContainer(
+                        SelectedOptionContainer(
                             INTERACTION_TYPE,
                             SelectedOption(
                                 RELAXATION, listOf(
@@ -115,11 +116,11 @@ object ManualStageOptions {
                                         RELAX_STRENGTH,
                                         "1.0"
                                     ),
-                                    SelectedPropertyContainer(
-                                        NUCLEI_ACID,
+                                    SelectedOptionContainer(
+                                        NUCLEIC_ACID,
                                         SelectedOption(DNA, listOf())
                                     ),
-                                    SelectedPropertyContainer(
+                                    SelectedOptionContainer(
                                         RELAXATION_FORCE,
                                         SelectedOption(CONSTANT_FORCE, listOf())
                                     )
@@ -127,7 +128,7 @@ object ManualStageOptions {
 
                             )
                         ),
-                        SelectedPropertyContainer(
+                        SelectedOptionContainer(
                             THERMOSTAT,
                             SelectedOption(
                                 BROWNIAN_THERMOSTAT, listOf(
@@ -156,11 +157,11 @@ object ManualStageOptions {
             SelectedProperty(VERLET_SKIN, "0.5"),
             SelectedProperty(EXTERNAL_FORCES, "true"),
             SelectedProperty(PRINT_INTERVAL, "100"),
-            SelectedPropertyContainer(
+            SelectedOptionContainer(
                 SIMULATION_TYPE,
                 SelectedOption(
                     MOLECULAR_DYNAMICS_SIMULATION, listOf(
-                        SelectedPropertyContainer(
+                        SelectedOptionContainer(
                             INTERACTION_TYPE,
                             SelectedOption(
                                 RELAXATION, listOf(
@@ -168,11 +169,11 @@ object ManualStageOptions {
                                         RELAX_STRENGTH,
                                         "100.0"
                                     ),
-                                    SelectedPropertyContainer(
-                                        NUCLEI_ACID,
+                                    SelectedOptionContainer(
+                                        NUCLEIC_ACID,
                                         SelectedOption(DNA, listOf())
                                     ),
-                                    SelectedPropertyContainer(
+                                    SelectedOptionContainer(
                                         RELAXATION_FORCE,
                                         SelectedOption(CONSTANT_FORCE, listOf())
                                     )
@@ -180,7 +181,7 @@ object ManualStageOptions {
 
                             )
                         ),
-                        SelectedPropertyContainer(
+                        SelectedOptionContainer(
                             THERMOSTAT,
                             SelectedOption(
                                 BROWNIAN_THERMOSTAT, listOf(
@@ -209,23 +210,23 @@ object ManualStageOptions {
             SelectedProperty(VERLET_SKIN, "0.05"),
             SelectedProperty(EXTERNAL_FORCES, "false"),
             SelectedProperty(PRINT_INTERVAL, "10000"),
-            SelectedPropertyContainer(
+            SelectedOptionContainer(
                 SIMULATION_TYPE,
                 SelectedOption(
                     MOLECULAR_DYNAMICS_SIMULATION, listOf(
-                        SelectedPropertyContainer(
+                        SelectedOptionContainer(
                             INTERACTION_TYPE,
                             SelectedOption(
                                 V1, listOf(
-                                    SelectedPropertyContainer(
-                                        NUCLEI_ACID,
+                                    SelectedOptionContainer(
+                                        NUCLEIC_ACID,
                                         SelectedOption(DNA, listOf())
                                     )
                                 )
 
                             )
                         ),
-                        SelectedPropertyContainer(
+                        SelectedOptionContainer(
                             THERMOSTAT,
                             SelectedOption(
                                 BROWNIAN_THERMOSTAT, listOf(
@@ -246,35 +247,35 @@ object ManualStageOptions {
      * Available Options
      */
 
-    private val v1InteractionContainer: PropertyContainer = PropertyContainer(
-        NUCLEI_ACID, listOf(
+    private val v1InteractionContainer: OptionContainer = OptionContainer(
+        NUCLEIC_ACID, listOf(
             Option(DNA, mapOf("interaction_type" to "DNA"), listOf()),
             Option(RNA, mapOf("interaction_type" to "RNA"), listOf())
         )
     )
 
-    private val v2InteractionContainer: PropertyContainer = PropertyContainer(
-        NUCLEI_ACID, listOf(
+    private val v2InteractionContainer: OptionContainer = OptionContainer(
+        NUCLEIC_ACID, listOf(
             Option(DNA, mapOf("interaction_type" to "DNA2"), listOf()),
             Option(RNA, mapOf("interaction_type" to "RNA2"), listOf())
         )
     )
 
-    private val relaxForceContainer: PropertyContainer = PropertyContainer(
+    private val relaxForceContainer: OptionContainer = OptionContainer(
         RELAXATION_FORCE, listOf(
             Option(CONSTANT_FORCE, mapOf("relax_type" to "constant_force"), listOf()),
             Option(HARMONIC_FORCE, mapOf("relax_type" to "harmonic_force"), listOf())
         )
     )
 
-    private val relaxNucleiAcidContainer: PropertyContainer = PropertyContainer(
-        NUCLEI_ACID, listOf(
+    private val relaxNucleiAcidContainer: OptionContainer = OptionContainer(
+        NUCLEIC_ACID, listOf(
             Option(DNA, mapOf("interaction_type" to "DNA_relax"), listOf()),
             Option(RNA, mapOf("interaction_type" to "RNA_relax"), listOf())
         )
     )
 
-    private val interactionTypeContainer: PropertyContainer = PropertyContainer(
+    private val interactionTypeContainer: OptionContainer = OptionContainer(
         INTERACTION_TYPE,
         listOf(
             Option(
@@ -307,7 +308,7 @@ object ManualStageOptions {
         )
     )
 
-    private val thermostatContainer: PropertyContainer = PropertyContainer(
+    private val thermostatContainer: OptionContainer = OptionContainer(
         THERMOSTAT,
         listOf(
             Option(
@@ -334,8 +335,8 @@ object ManualStageOptions {
         )
     )
 
-    private val simulationTypeContainer: PropertyContainer =
-        PropertyContainer(
+    private val simulationTypeContainer: OptionContainer =
+        OptionContainer(
             SIMULATION_TYPE, listOf(
                 Option(
                     POTENTIAL_ENERGY_MINIMIZATION, mapOf(
@@ -415,7 +416,7 @@ object ManualStageOptions {
             when (it) {
                 is Property -> set.add(SimpleListProperty(it.name, it.valueType))
 
-                is PropertyContainer -> {
+                is OptionContainer -> {
                     set.add(SimpleListProperty(it.name, ValueType.ENUM, it.values.mapTo(mutableSetOf()) { it.name }))
                     it.values.forEach { getAllProperties(it, set) }
                 }
@@ -455,14 +456,14 @@ object ManualStageOptions {
                 SelectedOption(level.name, cleanEntries)
         }
 
-        is PropertyContainer -> {
+        is OptionContainer -> {
             val selectedOption = propertiesLeft.remove(level.name)
                 ?.run { level.values.firstOrNull { it.name == this.value } }
                 ?.run { buildSelectedOptionRecursively(propertiesLeft, this) }
             if (selectedOption !is SelectedOption)
                 null
             else
-                SelectedPropertyContainer(level.name, selectedOption)
+                SelectedOptionContainer(level.name, selectedOption)
         }
 
         is Property -> {
@@ -489,14 +490,19 @@ sealed interface Entry {
  */
 @Serializable
 @SerialName("Option")
-data class Option(override val name: String, val fixedProperties: Map<String, String>, val entries: List<Entry>) : Entry
+data class Option(
+    override val name: String,
+    @Transient
+    val fixedProperties: Map<String, String> = mapOf(),
+    val entries: List<Entry>
+) : Entry
 
 /**
  * [Entry] that holds selectable [Option]s.
  */
 @Serializable
 @SerialName("Container")
-data class PropertyContainer(
+data class OptionContainer(
     override val name: String,
     val values: List<Option>
 ) : Entry
@@ -509,7 +515,9 @@ data class PropertyContainer(
 data class Property(
     override val name: String,
     val valueType: ValueType,
-    val configNames: List<String>,
+    @Transient
+    val configNames: List<String> = listOf(),
+    @Transient
     val suffix: String = ""
 ) : Entry
 
@@ -572,14 +580,14 @@ data class SelectedOption(override val name: String, val entries: List<SelectedE
  */
 @Serializable
 @SerialName("SelectedContainer")
-data class SelectedPropertyContainer(
+data class SelectedOptionContainer(
     override val name: String,
     val value: SelectedOption
 ) : SelectedEntry {
 
     override fun encodeToMap(level: Entry): Map<String, String> = buildMap {
         // this should be a Property and not a Container
-        if (level !is PropertyContainer)
+        if (level !is OptionContainer)
             ManualStageOptions.log.throwError(IllegalArgumentException("Expected Property named ${level.name}."))
         if (name != level.name)
             ManualStageOptions.log.throwError(IllegalArgumentException("Expected Container named ${level.name}."))

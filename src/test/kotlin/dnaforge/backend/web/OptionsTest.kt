@@ -1,7 +1,6 @@
 package dnaforge.backend.web
 
-import dnaforge.backend.sim.ManualStageOptions
-import dnaforge.backend.sim.StageConfigs
+import dnaforge.backend.sim.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.http.*
@@ -28,8 +27,22 @@ class OptionsTest {
             header(HttpHeaders.Authorization, bearerToken)
         }.apply {
             assertEquals(HttpStatusCode.OK, status)
-            assertEquals(ManualStageOptions.availableOptions, body())
+            assertEquals(simplifyOption(ManualStageOptions.availableOptions), body())
         }
+    }
+
+    /**
+     * fixedProperties, configNames and suffix are not sent by the webserver
+     * to avoid sending information that is irrelevant to the frontend.
+     */
+    private fun simplifyOption(option: Option): Option {
+        return Option(option.name, mapOf(), option.entries.map { entry ->
+            when (entry) {
+                is Option -> simplifyOption(entry)
+                is OptionContainer -> OptionContainer(entry.name, entry.values.map { option -> simplifyOption(option) })
+                is Property -> Property(entry.name, entry.valueType)
+            }
+        })
     }
 
     @Test

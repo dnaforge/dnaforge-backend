@@ -119,7 +119,7 @@ object StageConfigs {
                 is SelectedProperty ->
                     set.add(SimpleListProperty(entry.name, related.valueType, related.possibleValues, entry.value))
 
-                is SelectedPropertyContainer -> {
+                is SelectedOptionContainer -> {
                     set.add(SimpleListProperty(entry.name, related.valueType, related.possibleValues, entry.value.name))
                     getSelectedPropertiesAsSimpleListProperties(entry.value, set)
                 }
