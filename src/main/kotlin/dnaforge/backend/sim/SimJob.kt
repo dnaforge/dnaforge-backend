@@ -381,7 +381,11 @@ data class SimJob(
     ) {
         progress = stepsFromPreviousStages + stepsInCurrentStage
         stageProgress[stageIndex] = stepsInCurrentStage
-        val currentConf = endConfFile.readText()
+        val currentConf = try {
+            endConfFile.readText()
+        } catch (_: Throwable) {
+            ""
+        }
         if (currentConf.isBlank())
             log.debug("Read empty configuration file. Ignoring it.")
         else
