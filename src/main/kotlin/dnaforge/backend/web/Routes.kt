@@ -58,34 +58,15 @@ fun Application.configureRoutes() {
 
 
         route("/options") {
-            route("/available") {
-                get {
-                    ifAuthorized {
-                        call.respond(ManualStageOptions.availableOptions)
-                    }
-                }
-                get("/properties") {
-                    ifAuthorized {
-                        call.respond(ManualStageOptions.availableProperties)
-                    }
+            get("/available") {
+                ifAuthorized {
+                    call.respond(ManualStageOptions.availableOptions)
                 }
             }
 
-            route("/default") {
-                get {
-                    ifAuthorized {
-                        call.respond(StageConfigs.default)
-                    }
-                }
-                get("/files") {
-                    ifAuthorized {
-                        call.respond(StageConfigs.defaultFiles)
-                    }
-                }
-                get("/properties") {
-                    ifAuthorized {
-                        call.respond(StageConfigs.defaultProperties)
-                    }
+            get("/default") {
+                ifAuthorized {
+                    call.respond(StageConfigs.default)
                 }
             }
         }

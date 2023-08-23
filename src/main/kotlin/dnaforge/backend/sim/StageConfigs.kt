@@ -1,6 +1,7 @@
 package dnaforge.backend.sim
 
 import dnaforge.backend.*
+import dnaforge.backend.sim.StageConfigs.log
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -25,7 +26,7 @@ object StageConfigs {
             true,
             true,
             20u,
-            ManualStageOptions.min
+            ManualStageOptions.minRelax
         ),
         ManualConfig(
             mapOf(
@@ -58,70 +59,6 @@ object StageConfigs {
             ManualStageOptions.mdSim
         )
     )
-
-    val defaultFiles: List<StageConfig> = default.map {
-        when (it) {
-            is FileConfig -> it
-
-            is ManualConfig -> FileConfig(
-                it.metadata,
-                it.createTrajectory,
-                it.autoExtendStage,
-                it.maxExtensions,
-                it.toPropertiesMap().entries.joinToString("\n") { (key, value) -> "$key = $value" }
-            )
-
-            is PropertiesConfig -> it
-        }
-    }
-
-    val defaultProperties: List<StageConfig> = default.map {
-        when (it) {
-            is FileConfig -> log.throwError(IllegalArgumentException("FileConfigs cannot currently be converted to PropertiesConfigs."))
-
-            is ManualConfig -> PropertiesConfig(
-                it.metadata,
-                it.createTrajectory,
-                it.autoExtendStage,
-                it.maxExtensions,
-                getSelectedEntriesAsSelectedProperties(it.options)
-            )
-
-            is PropertiesConfig -> PropertiesConfig(
-                it.metadata,
-                it.createTrajectory,
-                it.autoExtendStage,
-                it.maxExtensions,
-                it.properties
-            )
-        }
-    }
-
-    /**
-     * Recursively collects all selected Properties in the given [SelectedOption].
-     */
-    private fun getSelectedEntriesAsSelectedProperties(
-        option: SelectedOption,
-        set: MutableSet<SelectedProperty> = mutableSetOf()
-    ): MutableSet<SelectedProperty> {
-        option.entries.forEach { entry ->
-            ManualStageOptions.availableProperties.firstOrNull { it.name == entry.name } ?: return set
-
-            when (entry) {
-                is SelectedProperty ->
-                    set.add(SelectedProperty(entry.name, entry.value))
-
-                is SelectedOptionContainer -> {
-                    set.add(SelectedProperty(entry.name, entry.value.name))
-                    getSelectedEntriesAsSelectedProperties(entry.value, set)
-                }
-
-                is SelectedOption -> getSelectedEntriesAsSelectedProperties(entry, set)
-            }
-        }
-
-        return set
-    }
 }
 
 
@@ -156,7 +93,7 @@ sealed class StageConfig {
      * @return a new [Map] containing the properties of this [StageConfig] and some default values.
      */
     fun toPropertiesMap(): Map<String, String> = buildMap {
-        this.putAll(encodeToMap())
+        putAll(encodeToMap())
 
         // input
         this["topology"] = "../$topologyFileName"
@@ -272,7 +209,7 @@ data class FileConfig(
 
 /**
  * [ManualConfig] is a type of [StageConfig]
- * and is to be used to represent an oxDNA input file with a permissive set of options.
+ * and is to be used to represent an oxDNA input file with a permissive set of properties.
  */
 @Serializable
 @SerialName("ManualConfig")
@@ -281,26 +218,64 @@ data class ManualConfig(
     override val createTrajectory: Boolean,
     override val autoExtendStage: Boolean,
     override val maxExtensions: UInt,
-    val options: SelectedOption
-) : StageConfig() {
-
-    override fun encodeToMap(): Map<String, String> = options.encodeToMap()
-}
-
-/**
- * [PropertiesConfig] is a type of [StageConfig]
- * and is to be used to represent an oxDNA input file with a permissive set of properties.
- */
-@Serializable
-@SerialName("PropertiesConfig")
-data class PropertiesConfig(
-    override val metadata: Map<String, String>,
-    override val createTrajectory: Boolean,
-    override val autoExtendStage: Boolean,
-    override val maxExtensions: UInt,
     val properties: Set<SelectedProperty>
 ) : StageConfig() {
 
+    private fun collectAllProperties(
+        propertiesLeft: MutableMap<String, SelectedProperty>,
+        level: Entry
+    ): Map<String, String> = when (level) {
+        is Option -> buildMap {
+            putAll(level.fixedProperties)
+
+            val backend = mutableSetOf<String?>()
+            backend.add(this["backend"])
+
+            level.entries.forEach { entry ->
+                putAll(collectAllProperties(propertiesLeft, entry))
+                backend.add(this["backend"])
+            }
+
+            // if CUDA support is not available, CUDA will not be used
+            // only if all options that include the backend property agree to use CUDA, CUDA will be used
+            if (!Environment.cuda || backend.contains("CPU"))
+                this["backend"] = "CPU"
+        }
+
+        is OptionContainer -> {
+            val prop = propertiesLeft.remove(level.name)
+                ?: log.throwError(IllegalArgumentException("Expected Property named \"${level.name}\"."))
+
+            level.values.firstOrNull { it.name == prop.value }
+                ?.run { collectAllProperties(propertiesLeft, this) }
+                ?: log.throwError(IllegalArgumentException("Unknown Option named \"${prop.value}\"."))
+        }
+
+        is Property -> {
+            val prop = propertiesLeft.remove(level.name)
+                ?: log.throwError(IllegalArgumentException("Expected Property named \"${level.name}\"."))
+
+            // validate data type
+            val valueWithSuffix = when (level.valueType) {
+                ValueType.BOOLEAN ->
+                    prop.value.toBooleanStrictOrNull()?.toString()
+                        ?: log.throwError(IllegalArgumentException("Expected boolean as value. Got \"${prop.value}\"."))
+
+                ValueType.UNSIGNED_INTEGER ->
+                    prop.value.toUIntOrNull()?.toString()
+                        ?: log.throwError(IllegalArgumentException("Expected unsigned integer as value. Got \"${prop.value}\"."))
+
+                ValueType.FLOAT ->
+                    prop.value.toFloatOrNull()?.toString()
+                        ?: log.throwError(IllegalArgumentException("Expected float as value. Got \"${prop.value}\"."))
+            } + level.suffix
+
+
+            // write value for all config names
+            level.configNames.associateWith { valueWithSuffix }
+        }
+    }
+
     override fun encodeToMap(): Map<String, String> =
-        ManualStageOptions.selectedPropertiesToSelectedOption(properties).encodeToMap()
+        collectAllProperties(properties.associateByTo(mutableMapOf()) { it.name }, ManualStageOptions.availableOptions)
 }

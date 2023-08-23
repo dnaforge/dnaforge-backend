@@ -84,35 +84,7 @@ echo "$response"
 
 The example above should produce a very long JSON response.
 
-## Get Properties Available for Properties Stage Configuration
-
-The server provides the available properties for manual configuration.
-
-```
-CLIENT -> GET/options/available/properties
-Server -> Option
-```
-
-### Example
-
-```shell
-#!/bin/bash
-
-# Get a bearer token from the auth endpoint
-bearer_token=$(curl -s 'http://0.0.0.0:8080/auth' \
-  -H 'Authorization: ChangeMe')
-
-# Get available options
-response=$(curl -s 'http://0.0.0.0:8080/options/available/properties' \
-  -H "Authorization: $bearer_token")
-
-echo "$response"
-
-```
-
-The example above should produce a long JSON response.
-
-## Get Default Manual Stage Configurations
+## Get Default Properties
 
 The server also provides some default stages that represent a good starting point for relaxation and simulation.
 
@@ -132,62 +104,6 @@ bearer_token=$(curl -s 'http://0.0.0.0:8080/auth' \
 
 # Get default options
 response=$(curl -s 'http://0.0.0.0:8080/options/default' \
-  -H "Authorization: $bearer_token")
-
-echo "$response"
-
-```
-
-The example above should produce a very long JSON response.
-
-## Get Default File Stage Configurations
-
-The server also provides some default stages that represent a good starting point for relaxation and simulation.
-
-```
-CLIENT -> GET/options/default/files
-SERVER -> List<StageConfig>
-```
-
-### Example
-
-```shell
-#!/bin/bash
-
-# Get a bearer token from the auth endpoint
-bearer_token=$(curl -s 'http://0.0.0.0:8080/auth' \
-  -H 'Authorization: ChangeMe')
-
-# Get default options
-response=$(curl -s 'http://0.0.0.0:8080/options/default/files' \
-  -H "Authorization: $bearer_token")
-
-echo "$response"
-
-```
-
-The example above should produce a very long JSON response.
-
-## Get Default Properties Stage Configurations
-
-The server also provides some default stages that represent a good starting point for relaxation and simulation.
-
-```
-CLIENT -> GET/options/default/properties
-SERVER -> List<StageConfig>
-```
-
-### Example
-
-```shell
-#!/bin/bash
-
-# Get a bearer token from the auth endpoint
-bearer_token=$(curl -s 'http://0.0.0.0:8080/auth' \
-  -H 'Authorization: ChangeMe')
-
-# Get default options
-response=$(curl -s 'http://0.0.0.0:8080/options/default/properties' \
   -H "Authorization: $bearer_token")
 
 echo "$response"
