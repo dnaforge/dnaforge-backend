@@ -428,9 +428,9 @@ object ManualStageOptions {
         return set
     }
 
-    fun simpleListPropertiesToSelectedOption(set: Set<SimpleListProperty>): SelectedOption {
+    fun selectedPropertiesToSelectedOption(set: Set<SelectedProperty>): SelectedOption {
         val available = availableProperties.associateBy { it.name }
-        val properties = set.filterTo(mutableSetOf()) { !it.value.isNullOrBlank() }
+        val properties = set.filterTo(mutableSetOf()) { it.value.isNotBlank() }
         if (properties.any { available[it.name] == null })
             log.throwError(IllegalArgumentException("Unknown properties: ${properties.retainAll { available[it.name] == null }}"))
 
@@ -444,7 +444,7 @@ object ManualStageOptions {
     }
 
     private fun buildSelectedOptionRecursively(
-        propertiesLeft: MutableMap<String, SimpleListProperty>,
+        propertiesLeft: MutableMap<String, SelectedProperty>,
         level: Entry
     ): SelectedEntry? = when (level) {
         is Option -> {

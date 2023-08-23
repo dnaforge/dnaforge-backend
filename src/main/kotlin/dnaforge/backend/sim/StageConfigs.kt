@@ -84,7 +84,7 @@ object StageConfigs {
                 it.createTrajectory,
                 it.autoExtendStage,
                 it.maxExtensions,
-                enhanceSimpleListProperties(getSelectedPropertiesAsSimpleListProperties(it.options))
+                getSelectedEntriesAsSelectedProperties(it.options)
             )
 
             is PropertiesConfig -> PropertiesConfig(
@@ -92,39 +92,31 @@ object StageConfigs {
                 it.createTrajectory,
                 it.autoExtendStage,
                 it.maxExtensions,
-                enhanceSimpleListProperties(it.properties)
+                it.properties
             )
         }
     }
 
     /**
-     * Makes sure that every available property also appears in the default properties.
-     */
-    private fun enhanceSimpleListProperties(properties: Set<SimpleListProperty>): Set<SimpleListProperty> {
-        val map = properties.associateBy { it.name }
-        return ManualStageOptions.availableProperties.mapTo(mutableSetOf()) { map[it.name] ?: it }
-    }
-
-    /**
      * Recursively collects all selected Properties in the given [SelectedOption].
      */
-    private fun getSelectedPropertiesAsSimpleListProperties(
+    private fun getSelectedEntriesAsSelectedProperties(
         option: SelectedOption,
-        set: MutableSet<SimpleListProperty> = mutableSetOf()
-    ): MutableSet<SimpleListProperty> {
+        set: MutableSet<SelectedProperty> = mutableSetOf()
+    ): MutableSet<SelectedProperty> {
         option.entries.forEach { entry ->
-            val related = ManualStageOptions.availableProperties.firstOrNull { it.name == entry.name } ?: return set
+            ManualStageOptions.availableProperties.firstOrNull { it.name == entry.name } ?: return set
 
             when (entry) {
                 is SelectedProperty ->
-                    set.add(SimpleListProperty(entry.name, related.valueType, related.possibleValues, entry.value))
+                    set.add(SelectedProperty(entry.name, entry.value))
 
                 is SelectedOptionContainer -> {
-                    set.add(SimpleListProperty(entry.name, related.valueType, related.possibleValues, entry.value.name))
-                    getSelectedPropertiesAsSimpleListProperties(entry.value, set)
+                    set.add(SelectedProperty(entry.name, entry.value.name))
+                    getSelectedEntriesAsSelectedProperties(entry.value, set)
                 }
 
-                is SelectedOption -> getSelectedPropertiesAsSimpleListProperties(entry, set)
+                is SelectedOption -> getSelectedEntriesAsSelectedProperties(entry, set)
             }
         }
 
@@ -306,9 +298,9 @@ data class PropertiesConfig(
     override val createTrajectory: Boolean,
     override val autoExtendStage: Boolean,
     override val maxExtensions: UInt,
-    val properties: Set<SimpleListProperty>
+    val properties: Set<SelectedProperty>
 ) : StageConfig() {
 
     override fun encodeToMap(): Map<String, String> =
-        ManualStageOptions.simpleListPropertiesToSelectedOption(properties).encodeToMap()
+        ManualStageOptions.selectedPropertiesToSelectedOption(properties).encodeToMap()
 }
