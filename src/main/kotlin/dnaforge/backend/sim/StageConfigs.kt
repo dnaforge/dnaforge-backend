@@ -44,8 +44,8 @@ object StageConfigs {
                 "description" to "Relaxes the structure with a short molecular dynamics simulation with a very small ΔT."
             ),
             true,
-            true,
-            20u,
+            false,
+            0u,
             ManualStageOptions.mdRelax
         ),
         ManualConfig(
