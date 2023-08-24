@@ -26,13 +26,13 @@ To use CUDA-enabled oxDNA in a Docker container, the
 [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html#setting-up-nvidia-container-toolkit)
 is required.  
 If you don't want to use Docker Compose, you will need to build the image manually:
-`docker build --tag lewimbes/dnaforge-backend .`.
+`docker build --tag dnaforge/dnaforge-backend .`.
 
 #### Usage
 
 With Docker Compose, just run `docker compose up -d`.  
 With pure Docker you need to run
-`docker run --runtime=nvidia --name dnaforge-backend -e "DATADIR=/data/" -e "PORT=8080" -p 8080:8080 -d lewimbes/dnaforge-backend`.
+`docker run --runtime=nvidia --name dnaforge-backend -e "DATADIR=/data/" -e "PORT=8080" -p 8080:8080 -d dnaforge/dnaforge-backend`.
 
 ### Bare-metal
 

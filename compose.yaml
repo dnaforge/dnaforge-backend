@@ -6,7 +6,7 @@ services:
         # Set NO_CUDA to any non-blank value to build and run this application without CUDA support
         # Also comment out the runtime setting
         NO_CUDA:
-    image: lewimbes/dnaforge-backend
+    image: dnaforge/dnaforge-backend
     container_name: dnaforge-backend
     # Comment the runtime setting out to build and run this application without CUDA support
     # Also set NO_CUDA to any non-blank value

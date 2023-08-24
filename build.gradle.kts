@@ -9,7 +9,7 @@ plugins {
     idea
 }
 
-group = "de.wimbes.leon.dnaforge-backend"
+group = "org.dnaforge.dnaforge-backend"
 version = "1.0-SNAPSHOT"
 
 repositories {
