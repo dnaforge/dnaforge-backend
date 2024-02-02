@@ -1,9 +1,9 @@
-# Backend for DNA Forge
+# Simulation Backend for DNAforge
 
 This repository provides relaxation and simulation capabilities for
-the [DNA Forge project](https://github.com/Ritkuli/dnaforge).  
+the [DNAforge project](https://github.com/dnaforge/dnaforge).  
 Under the hood, [oxDNA](https://github.com/lorenzo-rovigatti/oxDNA) is used to provide these features.  
-Communication with the DNA Forge frontend is via a REST-API and WebSockets.
+Communication with the DNAforge frontend is via a REST-API and WebSockets.
 If you want to know more about the communication protocol, you can have a look at [Protocol.md](Protocol.md).
 
 ## Usage

@@ -48,7 +48,7 @@ RUN mkdir /oxDNA/build/ && cd /oxDNA/build/ && \
 ## Copy binaries to correct location
 RUN cp /oxDNA/build/bin/* /usr/bin/
 
-## Copy DNA Forge backend files
+## Copy DNAforge backend files
 COPY --from=builder /dnaforge-backend/build/install/dnaforge-backend/ /dnaforge-backend/
 
 
