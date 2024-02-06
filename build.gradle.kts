@@ -1,10 +1,10 @@
-val kotlinVersion: String = "1.9.10"
-val ktorVersion: String = "2.3.3"
-val loggingVersion: String = "1.4.11"
+val kotlinVersion: String = "1.9.22"
+val ktorVersion: String = "2.3.8"
+val loggingVersion: String = "1.4.14"
 
 plugins {
-    kotlin("jvm") version "1.9.10"
-    kotlin("plugin.serialization") version "1.9.10"
+    kotlin("jvm") version "1.9.22"
+    kotlin("plugin.serialization") version "1.9.22"
     application
     idea
 }

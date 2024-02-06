@@ -1,12 +1,12 @@
 # Select the image based on the NO_CUDA variable and store it in IMAGE
 ARG NO_CUDA
 ARG IMAGE=${NO_CUDA:+ubuntu:22.04}
-ARG IMAGE=${IMAGE:-nvidia/cuda:12.2.0-devel-ubuntu22.04}
+ARG IMAGE=${IMAGE:-nvidia/cuda:12.3.1-devel-ubuntu22.04}
 
 
 
 # dnaforge-backend builder
-FROM gradle:8.3-jdk17-alpine as builder
+FROM gradle:8.6-jdk17-alpine as builder
 
 ## Copy necessary data (see .dockerignore)
 COPY .. /dnaforge-backend/
@@ -34,7 +34,7 @@ RUN apt-get update && apt-get install -y \
     openjdk-17-jre-headless
 
 ## Clone oxDNA
-RUN git clone https://github.com/lorenzo-rovigatti/oxDNA.git --branch v3.5.2
+RUN git clone https://github.com/lorenzo-rovigatti/oxDNA.git --branch v3.6.0
 
 # Build oxDNA using CMake
 RUN mkdir /oxDNA/build/ && cd /oxDNA/build/ && \
