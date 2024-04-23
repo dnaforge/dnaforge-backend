@@ -1,4 +1,6 @@
 # Simulation Backend for DNAforge
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.11045829.svg)](https://doi.org/10.5281/zenodo.11045829)
+
 
 This repository provides relaxation and simulation capabilities for
 the [DNAforge project](https://github.com/dnaforge/dnaforge).  
