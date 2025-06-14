@@ -25,6 +25,7 @@ object ManualStageOptions {
     private const val NUCLEIC_ACID = "Nucleic Acid"
     private const val DNA = "DNA"
     private const val RNA = "RNA"
+    private const val NA = "NA"
 
     private const val RELAXATION_FORCE = "Relaxation Force"
     private const val CONSTANT_FORCE = "Constant Force"
@@ -49,6 +50,12 @@ object ManualStageOptions {
     private const val PARTICLE_MOMENTUM_REFRESH_PROBABILITY = "Momentum-Refresh-Probability"
     private const val BASE_DIFFUSION_COEFFICIENT = "Base Diffusion Coefficient"
 
+
+    private val saltConcentrationProperty = Property(
+        "Salt Concentration",
+        ValueType.FLOAT,
+        listOf("salt_concentration")
+    )
 
     /*
      * Default Options
@@ -160,10 +167,19 @@ object ManualStageOptions {
         )
     )
 
+    private val minInteractionContainer: OptionContainer = OptionContainer(
+        NUCLEIC_ACID, listOf(
+            Option(DNA, mapOf("interaction_type" to "DNA"), listOf()),
+            Option(RNA, mapOf("interaction_type" to "RNA"), listOf()),
+            Option(NA, mapOf("interaction_type" to "NA"), listOf(saltConcentrationProperty))
+        )
+    )
+
     private val v2InteractionContainer: OptionContainer = OptionContainer(
         NUCLEIC_ACID, listOf(
             Option(DNA, mapOf("interaction_type" to "DNA2"), listOf()),
-            Option(RNA, mapOf("interaction_type" to "RNA2"), listOf())
+            Option(RNA, mapOf("interaction_type" to "RNA2"), listOf()),
+            Option(NA, mapOf("interaction_type" to "NA"), listOf())
         )
     )
 
@@ -177,7 +193,8 @@ object ManualStageOptions {
     private val relaxNucleiAcidContainer: OptionContainer = OptionContainer(
         NUCLEIC_ACID, listOf(
             Option(DNA, mapOf("interaction_type" to "DNA_relax"), listOf()),
-            Option(RNA, mapOf("interaction_type" to "RNA_relax"), listOf())
+            Option(RNA, mapOf("interaction_type" to "RNA_relax"), listOf()),
+            Option(NA, mapOf("interaction_type" to "NA_relax"), listOf(saltConcentrationProperty))
         )
     )
 
@@ -249,7 +266,9 @@ object ManualStageOptions {
                         "sim_type" to "min",
                         "interaction_type" to "DNA",
                         "backend" to "CPU"
-                    ), listOf()
+                    ), listOf(
+                        minInteractionContainer
+                    )
                 ),
                 Option(
                     MONTE_CARLO_SIMULATION, mapOf(
