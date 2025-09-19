@@ -1,10 +1,10 @@
-val kotlinVersion: String = "1.9.22"
-val ktorVersion: String = "2.3.8"
-val loggingVersion: String = "1.4.14"
+val kotlinVersion: String = "2.2.20"
+val ktorVersion: String = "3.3.1"
+val loggingVersion: String = "1.5.19"
 
 plugins {
-    kotlin("jvm") version "1.9.22"
-    kotlin("plugin.serialization") version "1.9.22"
+    kotlin("jvm") version "2.2.20"
+    kotlin("plugin.serialization") version "2.2.20"
     application
     idea
 }
@@ -17,12 +17,12 @@ repositories {
 }
 
 dependencies {
-    implementation("io.ktor:ktor-server-core-jvm:$ktorVersion")
-    implementation("io.ktor:ktor-server-netty-jvm:$ktorVersion")
-    implementation("io.ktor:ktor-server-content-negotiation-jvm:$ktorVersion")
-    implementation("io.ktor:ktor-server-websockets-jvm:$ktorVersion")
-    implementation("io.ktor:ktor-serialization-kotlinx-json-jvm:$ktorVersion")
-    implementation("io.ktor:ktor-server-status-pages-jvm:$ktorVersion")
+    implementation("io.ktor:ktor-server-core:$ktorVersion")
+    implementation("io.ktor:ktor-server-netty:$ktorVersion")
+    implementation("io.ktor:ktor-server-content-negotiation:$ktorVersion")
+    implementation("io.ktor:ktor-server-websockets:$ktorVersion")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
+    implementation("io.ktor:ktor-server-status-pages:$ktorVersion")
     implementation("io.ktor:ktor-server-partial-content:$ktorVersion")
     implementation("io.ktor:ktor-server-auto-head-response:$ktorVersion")
     implementation("io.ktor:ktor-server-cors:$ktorVersion")
@@ -31,7 +31,7 @@ dependencies {
 
 
     testImplementation(kotlin("test", kotlinVersion))
-    testImplementation("io.ktor:ktor-server-tests-jvm:$ktorVersion")
+    testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
     testImplementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
 }
 
@@ -42,7 +42,7 @@ tasks.test {
     environment("ACCESSTOKEN", "TestToken")
     environment("PORT", 8080)
     environment("CUDA", true)
-    environment("LOGLEVEL", "ALL")
+    environment("LOGLEVEL", "TRACE")
 }
 
 kotlin {

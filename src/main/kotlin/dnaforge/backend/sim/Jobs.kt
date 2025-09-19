@@ -13,7 +13,6 @@ import java.io.File
 /**
  * This object manages jobs in this application.
  */
-@OptIn(DelicateCoroutinesApi::class)
 object Jobs {
     private val log = LoggerFactory.getLogger(Jobs::class.java)
     private val mutex = Mutex()
@@ -57,8 +56,8 @@ object Jobs {
     /**
      * Starts a new thread. This thread will then automatically execute the submitted jobs one at a time.
      */
-    suspend fun enableAutomaticJobExecution() {
-        val scope = CoroutineScope(newSingleThreadContext("JobExecutionContext"))
+    fun enableAutomaticJobExecution() {
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO.limitedParallelism(1))
         val coroutineJob = scope.launch {
             for (job in queue) {
                 // check if the job is actually still queued or not

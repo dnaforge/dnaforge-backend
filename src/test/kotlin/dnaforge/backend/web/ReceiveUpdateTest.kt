@@ -10,9 +10,8 @@ import io.ktor.http.*
 import io.ktor.server.testing.*
 import io.ktor.websocket.*
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.newSingleThreadContext
 import java.io.File
 import kotlin.test.*
 
@@ -62,7 +61,6 @@ class ReceiveUpdateTest {
         }
     }
 
-    @OptIn(DelicateCoroutinesApi::class)
     @Test
     fun `receiving detailed updates`() = testApplication {
         val (client, bearerToken) = prepareWithAuth()
@@ -105,7 +103,7 @@ class ReceiveUpdateTest {
             assertEquals(JobState.NEW, message.job.status)
 
             // manual execution as automatic execution is disabled
-            val scope = CoroutineScope(newSingleThreadContext("TestJobExecutionContext"))
+            val scope = CoroutineScope(Dispatchers.Default)
             scope.launch {
                 Jobs.getJob(job0.id)!!.execute()
             }

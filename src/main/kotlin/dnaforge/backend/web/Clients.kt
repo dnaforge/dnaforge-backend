@@ -23,7 +23,6 @@ import kotlin.time.toDuration
  * This object manages clients connected to this application.
  * It is responsible for distributing updates.
  */
-@OptIn(DelicateCoroutinesApi::class)
 object Clients {
     private val log = LoggerFactory.getLogger(Jobs::class.java)
     private val mutex = Mutex()
@@ -35,7 +34,7 @@ object Clients {
     private val jobIdSubscribedClient = mutableMapOf<UInt, MutableList<Client>>()
 
     init {
-        val scope = CoroutineScope(newSingleThreadContext("JobExecutionContext"))
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
         val coroutineJob = scope.launch {
             // run cleanup once every minute
             while (true) {

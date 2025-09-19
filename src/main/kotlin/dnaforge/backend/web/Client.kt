@@ -3,7 +3,6 @@ package dnaforge.backend.web
 import dnaforge.backend.simpleJson
 import io.ktor.server.websocket.*
 import io.ktor.websocket.*
-import kotlinx.serialization.encodeToString
 import java.time.Instant
 
 /**

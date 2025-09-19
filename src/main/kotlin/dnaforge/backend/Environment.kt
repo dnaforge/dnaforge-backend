@@ -2,6 +2,7 @@ package dnaforge.backend
 
 import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.LoggerContext
+import dnaforge.backend.Environment.accessToken
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -56,9 +57,7 @@ object Environment {
 
         // Reading environment variables and arguments
         val dataPath: String? = System.getenv("DATADIR")
-        var accessToken: String? = System.getenv("ACCESSTOKEN")?.trim()
-        if (accessToken?.isBlank() == true) accessToken = null
-        Environment.accessToken = accessToken
+        accessToken = System.getenv("ACCESSTOKEN")?.trim()?.takeIf { it.isNotEmpty() }
 
         port = System.getenv("PORT")?.toIntOrNull() ?: 8080
         host = System.getenv("HOST") ?: "0.0.0.0"
@@ -71,7 +70,7 @@ object Environment {
 
         dataDir = File(dataPath)
 
-        log.info("AccessToken: \"${Environment.accessToken}\"")
+        log.info("AccessToken: \"${accessToken}\"")
         log.info("Data directory: \"$dataDir\"")
         log.info("Address: \"$host:$port\"")
         log.info("CUDA support: $cuda")

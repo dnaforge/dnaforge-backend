@@ -305,7 +305,7 @@ data class SimJob(
                 // read custom observables line
                 line = try {
                     energyStream?.readLine() ?: break
-                } catch (e: IOException) {
+                } catch (_: IOException) {
                     break
                 }
 
@@ -319,7 +319,7 @@ data class SimJob(
 
                 // read default observables line
                 try {
-                    energyStream?.readLine()
+                    energyStream.readLine()
                 } catch (_: IOException) {
                 }
             }
