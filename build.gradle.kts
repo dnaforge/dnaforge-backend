@@ -17,22 +17,22 @@ repositories {
 }
 
 dependencies {
-    implementation("io.ktor", "ktor-server-core-jvm", ktorVersion)
-    implementation("io.ktor", "ktor-server-netty-jvm", ktorVersion)
-    implementation("io.ktor", "ktor-server-content-negotiation-jvm", ktorVersion)
-    implementation("io.ktor", "ktor-server-websockets-jvm", ktorVersion)
-    implementation("io.ktor", "ktor-serialization-kotlinx-json-jvm", ktorVersion)
-    implementation("io.ktor", "ktor-server-status-pages-jvm", ktorVersion)
-    implementation("io.ktor", "ktor-server-partial-content", ktorVersion)
-    implementation("io.ktor", "ktor-server-auto-head-response", ktorVersion)
-    implementation("io.ktor",  "ktor-server-cors", ktorVersion)
+    implementation("io.ktor:ktor-server-core-jvm:$ktorVersion")
+    implementation("io.ktor:ktor-server-netty-jvm:$ktorVersion")
+    implementation("io.ktor:ktor-server-content-negotiation-jvm:$ktorVersion")
+    implementation("io.ktor:ktor-server-websockets-jvm:$ktorVersion")
+    implementation("io.ktor:ktor-serialization-kotlinx-json-jvm:$ktorVersion")
+    implementation("io.ktor:ktor-server-status-pages-jvm:$ktorVersion")
+    implementation("io.ktor:ktor-server-partial-content:$ktorVersion")
+    implementation("io.ktor:ktor-server-auto-head-response:$ktorVersion")
+    implementation("io.ktor:ktor-server-cors:$ktorVersion")
 
-    implementation("ch.qos.logback", "logback-classic", loggingVersion)
+    implementation("ch.qos.logback:logback-classic:$loggingVersion")
 
 
     testImplementation(kotlin("test", kotlinVersion))
-    testImplementation("io.ktor", "ktor-server-tests-jvm", ktorVersion)
-    testImplementation("io.ktor", "ktor-client-content-negotiation", ktorVersion)
+    testImplementation("io.ktor:ktor-server-tests-jvm:$ktorVersion")
+    testImplementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
 }
 
 tasks.test {

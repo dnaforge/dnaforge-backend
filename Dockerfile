@@ -6,7 +6,7 @@ ARG IMAGE=${IMAGE:-nvidia/cuda:12.3.1-devel-ubuntu22.04}
 
 
 # dnaforge-backend builder
-FROM gradle:8.6-jdk17-alpine as builder
+FROM gradle:9.1.0-jdk17-alpine AS builder
 
 ## Copy necessary data (see .dockerignore)
 COPY .. /dnaforge-backend/
