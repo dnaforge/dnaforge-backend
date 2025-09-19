@@ -74,7 +74,8 @@ object ManualStageOptions {
         SelectedProperty(EXTERNAL_FORCES, "true"),
         SelectedProperty(PRINT_INTERVAL, "100"),
 
-        SelectedProperty(SIMULATION_TYPE, POTENTIAL_ENERGY_MINIMIZATION)
+        SelectedProperty(SIMULATION_TYPE, POTENTIAL_ENERGY_MINIMIZATION),
+        SelectedProperty(NUCLEIC_ACID, DNA)
     )
 
     /**
