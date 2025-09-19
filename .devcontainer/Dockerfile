@@ -42,35 +42,17 @@ RUN mkdir /oxDNA/build/ && cd /oxDNA/build/ && \
 
 
 
-# DNAforge backend builder stage
-FROM gradle:9.1.0-jdk21-alpine AS dnaforge-backend-builder
-
-## Copy project source code (see .dockerignore for exclusions)
-COPY . /dnaforge-backend/
-
-## Compile Kotlin application
-RUN cd /dnaforge-backend/ && \
-    gradle installDist
-
-
-
 # Final runtime image
 FROM base-${CUDA}
 ARG CUDA
 ENV CUDA=${CUDA}
 
-## Install runtime dependencies
+## Install dependencies for sharing GPG keys
 RUN apt-get update && \
     apt-get install -y \
-    openjdk-21-jre-headless && \
+    gnupg2 && \
     rm -rf /var/lib/apt/lists/*
 
 ## Copy oxDNA binaries from builder stage
 COPY --from=oxdna-builder /oxDNA/build/bin/* /usr/bin/
 COPY --from=oxdna-builder /oxDNA/build/src/liboxdna_common.* /usr/lib/
-
-## Copy DNAforge backend application from builder stage
-COPY --from=dnaforge-backend-builder /dnaforge-backend/build/install/dnaforge-backend/ /dnaforge-backend/
-
-## Start server
-ENTRYPOINT ["dnaforge-backend/bin/dnaforge-backend"]

@@ -3,17 +3,15 @@ services:
     build:
       context: .
       args:
-        # Set NO_CUDA to any non-blank value to build and run this application without CUDA support
-        # Also comment out the runtime setting
-        NO_CUDA:
+        # Set to true to enable CUDA support
+        CUDA: false
     image: dnaforge/dnaforge-backend
     container_name: dnaforge-backend
-    # Comment the runtime setting out to build and run this application without CUDA support
-    # Also set NO_CUDA to any non-blank value
-    runtime: nvidia
+    # Uncomment the runtime line below ONLY when CUDA is set to true
+    # runtime: nvidia
     restart: unless-stopped
     ports:
-      - 8080:8080
+      - "8080:8080"
     environment:
       # Define the location of the data directory in the container.
       DATADIR: /data/
