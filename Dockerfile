@@ -6,7 +6,7 @@ ARG IMAGE=${IMAGE:-nvidia/cuda:12.3.1-devel-ubuntu22.04}
 
 
 # dnaforge-backend builder
-FROM gradle:9.1.0-jdk17-alpine AS builder
+FROM gradle:9.1.0-jdk21-alpine AS builder
 
 ## Copy necessary data (see .dockerignore)
 COPY .. /dnaforge-backend/
@@ -31,7 +31,7 @@ RUN apt-get update && apt-get install -y \
     git \
     cmake \
     build-essential \
-    openjdk-17-jre-headless
+    openjdk-21-jre-headless
 
 ## Clone oxDNA
 RUN git clone https://github.com/lorenzo-rovigatti/oxDNA.git --branch v3.6.0
