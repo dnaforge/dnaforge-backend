@@ -121,6 +121,22 @@ class ReceiveUpdateTest {
             assertIs<DetailedUpdate>(message)
             assertEquals(job0, message.job)
             assertEquals(JobState.RUNNING, message.job.status)
+
+            // Wait for job to complete to avoid race conditions with other tests
+            do {
+                frame = incoming.receive()
+                assertIs<Frame.Text>(frame)
+                message = frame.toMessage()
+
+                // Keep receiving updates until job reaches a final state
+                val finalStates = setOf(JobState.DONE, JobState.CANCELED)
+                if (message is JobUpdate && message.job?.status in finalStates) {
+                    break
+                }
+                if (message is DetailedUpdate && message.job.status in finalStates) {
+                    break
+                }
+            } while (true)
         }
     }
 }
