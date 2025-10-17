@@ -1,6 +1,6 @@
 # Simulation Backend for DNAforge
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.11045829.svg)](https://doi.org/10.5281/zenodo.11045829)
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.11045829.svg)](https://doi.org/10.5281/zenodo.11045829)
 
 This repository provides relaxation and simulation capabilities for
 the [DNAforge project](https://github.com/dnaforge/dnaforge).  
@@ -15,8 +15,7 @@ container.
 Of course, it is also possible to run this project bare-metal.  
 The application uses some environment variables for configuration.
 See [compose.yaml](compose.yaml) for explanations.
-The `NO_CUDA` build variable is not needed when running bare-metal.
-Instead, `CUDA` can be set to `false` if needed.
+The `CUDA` build variable can be set to `true` to enable CUDA support or `false` for CPU-only mode.
 
 ### Containerized
 
@@ -28,13 +27,18 @@ To use CUDA-enabled oxDNA in a Docker container, the
 [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html#setting-up-nvidia-container-toolkit)
 is required.  
 If you don't want to use Docker Compose, you will need to build the image manually:
-`docker build --tag dnaforge/dnaforge-backend .`.
+
+- For CPU-only: `docker build --build-arg CUDA=false --tag dnaforge/dnaforge-backend .`
+- For CUDA support: `docker build --build-arg CUDA=true --tag dnaforge/dnaforge-backend .`
 
 #### Usage
 
 With Docker Compose, just run `docker compose up -d`.  
-With pure Docker you need to run
-`docker run --runtime=nvidia --name dnaforge-backend -e "DATADIR=/data/" -e "PORT=8080" -p 8080:8080 -d dnaforge/dnaforge-backend`.
+To enable CUDA support, first edit `compose.yaml` to set `CUDA: true` and uncomment the `runtime: nvidia` line.  
+With pure Docker you need to run:
+
+- CPU-only: `docker run --name dnaforge-backend -e "DATADIR=/data/" -e "PORT=8080" -p 8080:8080 -d dnaforge/dnaforge-backend`
+- CUDA-enabled: `docker run --runtime=nvidia --name dnaforge-backend -e "DATADIR=/data/" -e "PORT=8080" -p 8080:8080 -d dnaforge/dnaforge-backend`
 
 ### Bare-metal
 

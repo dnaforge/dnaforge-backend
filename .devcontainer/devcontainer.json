@@ -1,29 +1,28 @@
-// For format details, see https://aka.ms/devcontainer.json. For config options, see the
-// README at: https://github.com/devcontainers/templates/tree/main/src/docker-existing-dockerfile
 {
-	"name": "Existing Dockerfile",
+	"name": "DNAforge Backend Dev Container",
 	"build": {
-		// Sets the run context to one level up instead of the .devcontainer folder.
 		"context": "..",
-		// Update the 'dockerFile' property if you aren't using the standard 'Dockerfile' filename.
-		"dockerfile": "../Dockerfile"
+		"dockerfile": "./Dockerfile",
+		"args": {
+			// Set to true to enable CUDA support for development
+			// Requires nvidia-docker and CUDA-capable GPU
+			"CUDA": "false"
+		}
 	},
-
-	// Enable CUDA support
-	"runArgs": ["--runtime=nvidia"]
-
-	// Features to add to the dev container. More info: https://containers.dev/features.
-	// "features": {},
-
-	// Use 'forwardPorts' to make a list of ports inside the container available locally.
-	// "forwardPorts": [],
-
-	// Uncomment the next line to run commands after the container is created.
-	// "postCreateCommand": "cat /etc/os-release",
-
-	// Configure tool-specific properties.
-	// "customizations": {},
-
-	// Uncomment to connect as an existing user other than the container default. More info: https://aka.ms/dev-containers-non-root.
-	// "remoteUser": "devcontainer"
+	// Uncomment the runArgs below ONLY if CUDA is set to true above
+	// "runArgs": [
+	// 	"--runtime=nvidia"
+	// ],
+	"remoteUser": "ubuntu",
+	"features": {
+		"ghcr.io/devcontainers/features/common-utils:2": {
+			"configureZshAsDefaultShell": true,
+			"username": "ubuntu"
+		},
+		"ghcr.io/devcontainers/features/java:1": {
+			"version": "21",
+			"installGradle": true,
+			"gradleVersion": "9.1.0"
+		}
+	}
 }

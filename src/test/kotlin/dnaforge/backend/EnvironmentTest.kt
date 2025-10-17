@@ -33,6 +33,6 @@ class EnvironmentTest {
     fun `logging level correct`() {
         val loggerContext = LoggerFactory.getILoggerFactory() as LoggerContext
         val rootLogger = loggerContext.getLogger(Logger.ROOT_LOGGER_NAME)
-        assertEquals(Level.ALL, rootLogger.level)
+        assertEquals(Level.TRACE, rootLogger.level)
     }
 }

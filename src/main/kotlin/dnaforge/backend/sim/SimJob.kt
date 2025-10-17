@@ -305,7 +305,7 @@ data class SimJob(
                 // read custom observables line
                 line = try {
                     energyStream?.readLine() ?: break
-                } catch (e: IOException) {
+                } catch (_: IOException) {
                     break
                 }
 
@@ -319,7 +319,7 @@ data class SimJob(
 
                 // read default observables line
                 try {
-                    energyStream?.readLine()
+                    energyStream.readLine()
                 } catch (_: IOException) {
                 }
             }
@@ -342,7 +342,7 @@ data class SimJob(
         // and there have been less than 200 so far
         if (success && autoExtendStage && extensions[stageIndex] < maxExtensions) {
             val potentialEnergyChange =
-                (stepStates.first.potentialEnergy - stepStates.last.potentialEnergy).absoluteValue
+                (stepStates.first().potentialEnergy - stepStates.last().potentialEnergy).absoluteValue
             val distinctStretchedBonds = stepStates.mapTo(HashSet()) { it.stretchedBonds }.size
             if (// the potential energy still changes a lot
                 potentialEnergyChange > 0.01f

@@ -187,7 +187,7 @@ data class FileConfig(
             } else { // not in block
                 val pos = line.indexOf('=')
                 if (pos == -1) continue
-                val key = line.substring(0, pos).trim()
+                val key = line.take(pos).trim()
                 val value = line.substring(pos + 1).trim()
                 val levelChange = countBrackets(value)
 

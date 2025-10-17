@@ -17,7 +17,6 @@ import io.ktor.server.plugins.statuspages.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import io.ktor.util.pipeline.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.time.Instant
@@ -188,7 +187,7 @@ fun Application.configureRoutes() {
  *
  * @param body the code to be executed if a valid ID was passed.
  */
-private suspend inline fun PipelineContext<Unit, ApplicationCall>.withJob(body: PipelineContext<Unit, ApplicationCall>.(SimJob) -> Unit) {
+private suspend inline fun RoutingContext.withJob(body: RoutingContext.(SimJob) -> Unit) {
     val job = call.parameters["id"]?.toUIntOrNull()?.run { Jobs.getJob(this) }
     if (job == null)
         call.respond(HttpStatusCode.NotFound)
@@ -202,7 +201,7 @@ private suspend inline fun PipelineContext<Unit, ApplicationCall>.withJob(body: 
  *
  * @param body the code to execute if an authenticated [Client] is identified.
  */
-private suspend inline fun PipelineContext<Unit, ApplicationCall>.ifAuthorized(body: PipelineContext<Unit, ApplicationCall>.(Client) -> Unit) {
+private suspend inline fun RoutingContext.ifAuthorized(body: RoutingContext.(Client) -> Unit) {
     val client = Clients.getClientByBearerToken(call.request.authorization())
     if (client == null)
         call.respond(HttpStatusCode.Unauthorized)
@@ -215,6 +214,6 @@ private suspend inline fun PipelineContext<Unit, ApplicationCall>.ifAuthorized(b
 /**
  * Sends [HttpStatusCode.OK] in response.
  */
-private suspend inline fun PipelineContext<Unit, ApplicationCall>.ok() {
+private suspend inline fun RoutingContext.ok() {
     call.respond(HttpStatusCode.OK)
 }

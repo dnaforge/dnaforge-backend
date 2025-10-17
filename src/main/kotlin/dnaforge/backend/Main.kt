@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory
 
 private val log = LoggerFactory.getLogger("Main")
 
-suspend fun main(): Unit = try {
+fun main(): Unit = try {
     // start job worker
     Jobs.enableAutomaticJobExecution()
 

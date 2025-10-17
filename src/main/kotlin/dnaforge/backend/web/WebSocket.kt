@@ -5,8 +5,7 @@ import io.ktor.server.application.*
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
 import io.ktor.websocket.*
-import kotlinx.serialization.encodeToString
-import java.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Adds a WebSocket to the web server.
@@ -14,7 +13,7 @@ import java.time.Duration
 fun Application.configureWebSocket() {
     // install plugin
     install(WebSockets) {
-        pingPeriod = Duration.ofSeconds(15)
+        pingPeriod = 15.seconds
     }
 
     routing {
@@ -30,7 +29,7 @@ fun Application.configureWebSocket() {
 
                 val message = try {
                     frame.toMessage()
-                } catch (e: Throwable) {
+                } catch (_: Throwable) {
                     continue // ignore invalid messages
                 }
 
